@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'signup_page.dart';
+import 'login_page.dart';
+import 'services/database_helper.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -35,7 +38,9 @@ class WelcomePage extends StatelessWidget {
               const SizedBox(height: 40),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/login');
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (context) => SignUpPage()),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.grey[700],
@@ -49,7 +54,9 @@ class WelcomePage extends StatelessWidget {
               const SizedBox(height: 15),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/register');
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (context) => const SignUpPage()),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.grey[600],

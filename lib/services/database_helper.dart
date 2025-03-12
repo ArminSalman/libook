@@ -28,12 +28,13 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        age INTEGER NOT NULL
+        username TEXT NOT NULL UNIQUE,
+        first_name TEXT NOT NULL,
+        last_name TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        password TEXT NOT NULL,
       )
-    '''
-
-    );
+    ''');
   }
 
   Future<int> insertUser(Map<String, dynamic> user) async {
@@ -44,6 +45,16 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> getUsers() async {
     final db = await instance.database;
     return await db.query('users');
+  }
+
+  Future<Map<String, dynamic>?> getUserById(int id) async {
+    final db = await instance.database;
+    final result = await db.query(
+      'users',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    return result.isNotEmpty ? result.first : null;
   }
 
   Future<int> updateUser(Map<String, dynamic> user) async {
