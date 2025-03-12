@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'signup_page.dart';
 import 'login_page.dart';
-import 'services/database_helper.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
