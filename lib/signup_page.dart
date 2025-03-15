@@ -58,9 +58,9 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[200],
+      backgroundColor: Colors.grey[500],
       appBar: AppBar(
-        backgroundColor: Colors.grey[900],
+        backgroundColor: Colors.grey[600],
         title: const Text(
           'Sign Up',
           style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
@@ -234,7 +234,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     : ElevatedButton(
                   onPressed: _signUp,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey[900],
+                    backgroundColor: Colors.black38,
                     padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
                     elevation: 5,

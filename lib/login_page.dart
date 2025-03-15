@@ -37,9 +37,9 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[200], // Aynı açık gri arka plan
+      backgroundColor: Colors.grey[500], // Aynı açık gri arka plan
       appBar: AppBar(
-        backgroundColor: Colors.grey[900], // Aynı koyu gri app bar
+        backgroundColor: Colors.grey[600], // Aynı koyu gri app bar
         title: const Text(
           'Login',
           style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
@@ -117,7 +117,7 @@ class _LoginPageState extends State<LoginPage> {
                   : ElevatedButton(
                 onPressed: _login,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey[900], // Aynı koyu gri buton
+                  backgroundColor: Colors.black38, // Aynı koyu gri buton
                   padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
                   elevation: 5,
