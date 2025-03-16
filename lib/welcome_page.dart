@@ -1,14 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'signup_page.dart';
 import 'login_page.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
 
+  Future<void> _requestPermission() async {
+    // Check if the permission is already granted
+    if (await Permission.storage.request().isGranted) {
+      print("✅ Storage Permission Granted");
+      return;
+    }
+
+    // For Android 11+ (Scoped Storage)
+    if (await Permission.manageExternalStorage.request().isGranted) {
+      print("✅ Manage External Storage Permission Granted");
+      return;
+    }
+
+    // Handle permanent denial
+    if (await Permission.storage.isPermanentlyDenied ||
+        await Permission.manageExternalStorage.isPermanentlyDenied) {
+      print("❌ Storage Permission Permanently Denied - Open Settings");
+      openAppSettings();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[900], // Dark gray background
+      backgroundColor: Colors.grey[900],
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
@@ -36,7 +58,8 @@ class WelcomePage extends StatelessWidget {
               ),
               const SizedBox(height: 40),
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
+                  await _requestPermission();
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(builder: (context) => const LoginPage()),
                   );
@@ -52,7 +75,8 @@ class WelcomePage extends StatelessWidget {
               ),
               const SizedBox(height: 15),
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
+                  await _requestPermission();
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(builder: (context) => const SignUpPage()),
                   );

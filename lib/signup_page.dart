@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:libook/services/user_control.dart';
-import 'login_page.dart'; // LoginPage'e yönlendirme için
-import 'services/database_helper.dart';
+import 'login_page.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -67,7 +66,7 @@ class _SignUpPageState extends State<SignUpPage> {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView( // Uzun form için kaydırılabilir hale getirildi
+      body: SingleChildScrollView( // It is able to scroll for long form
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Form(
@@ -76,7 +75,7 @@ class _SignUpPageState extends State<SignUpPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 42.0),
-                // Kullanıcı Adı Alanı
+                // Username Field
                 TextFormField(
                   controller: _usernameController,
                   decoration: InputDecoration(
@@ -98,7 +97,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
                 const SizedBox(height: 16.0),
 
-                // İsim Alanı
+                // Name Field
                 TextFormField(
                   controller: _firstNameController,
                   decoration: InputDecoration(
@@ -119,7 +118,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
                 const SizedBox(height: 16.0),
 
-                // Soyisim Alanı
+                // Family name Field
                 TextFormField(
                   controller: _lastNameController,
                   decoration: InputDecoration(
@@ -140,7 +139,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
                 const SizedBox(height: 16.0),
 
-                // Email Alanı
+                // Email Field
                 TextFormField(
                   controller: _emailController,
                   decoration: InputDecoration(
@@ -162,7 +161,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
                 const SizedBox(height: 16.0),
 
-                // Şifre Alanı
+                // Password Field
                 TextFormField(
                   controller: _passwordController,
                   obscureText: !_isPasswordVisible,
@@ -189,7 +188,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
                 const SizedBox(height: 16.0),
 
-                // Şifre Onay Alanı
+                // Password Confirm Field
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: !_isConfirmPasswordVisible,
@@ -216,19 +215,19 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
                 const SizedBox(height: 24.0),
 
-                // LoginPage'e yönlendirme
+                // Moving to Login Page
                 GestureDetector(
                   onTap: () => {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginPage()))
+                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginPage()))
                   },
                   child: const Text(
-                    "Do have already an account? Login",
-                    style: TextStyle(color: Colors.blue),
+                    "Do have already an account?",
+                    style: TextStyle(color: Colors.white),
                   ),
                 ),
                 const SizedBox(height: 24.0),
 
-                // Sign Up Butonu
+                // Sign Up Button
                 _isLoading
                     ? CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[900]!))
                     : ElevatedButton(

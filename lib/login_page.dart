@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-
-import 'signup_page.dart';
+import 'package:libook/home_page.dart';
+import 'package:libook/signup_page.dart';
+import 'services/user_control.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -13,6 +14,7 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final UserControl _userControl = UserControl();
   bool _isPasswordVisible = false;
   bool _isLoading = false;
 
@@ -24,12 +26,29 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _login() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      await Future.delayed(const Duration(seconds: 2)); // Simüle edilmiş ağ isteği
-      setState(() => _isLoading = false);
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    final users = await _userControl.getUsers();
+    final email = _emailController.text;
+    final password = _passwordController.text;
+
+    final user = users.firstWhere(
+          (u) => u['email'] == email && u['password'] == password,
+      orElse: () => {},
+    );
+
+    setState(() => _isLoading = false);
+
+    if (user.isNotEmpty) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()),
+      );
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login successful!')),
+        const SnackBar(content: Text('Invalid email or password')),
       );
     }
   }
@@ -37,9 +56,9 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[500], // Aynı açık gri arka plan
+      backgroundColor: Colors.grey[500],
       appBar: AppBar(
-        backgroundColor: Colors.grey[600], // Aynı koyu gri app bar
+        backgroundColor: Colors.grey[600],
         title: const Text(
           'Login',
           style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
@@ -53,71 +72,54 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Email Alanı
               TextFormField(
                 controller: _emailController,
                 decoration: InputDecoration(
                   labelText: 'Email',
-                  labelStyle: TextStyle(color: Colors.grey[800]),
-                  prefixIcon: Icon(Icons.email, color: Colors.grey[800]),
+                  prefixIcon: const Icon(Icons.email),
                   filled: true,
                   fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.0),
-                    borderSide: BorderSide.none,
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0)),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Please enter your email';
-                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) return 'Please enter a valid email';
-                  return null;
-                },
+                validator: (value) => value!.isEmpty ? 'Enter email' : null,
               ),
               const SizedBox(height: 16.0),
-
-              // Şifre Alanı
               TextFormField(
                 controller: _passwordController,
                 obscureText: !_isPasswordVisible,
                 decoration: InputDecoration(
                   labelText: 'Password',
-                  labelStyle: TextStyle(color: Colors.grey[800]),
-                  prefixIcon: Icon(Icons.lock, color: Colors.grey[800]),
+                  prefixIcon: const Icon(Icons.lock),
                   suffixIcon: IconButton(
-                    icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off, color: Colors.grey[800]),
+                    icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off),
                     onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
                   ),
                   filled: true,
                   fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.0),
-                    borderSide: BorderSide.none,
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0)),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Please enter your password';
-                  return null; // Login için şifre uzunluğu kontrolü yok
-                },
+                validator: (value) => value!.isEmpty ? 'Enter password' : null,
               ),
               const SizedBox(height: 24.0),
 
-              // SignUpPage'e yönlendirme
+              // Moving to Sing Up Page
               GestureDetector(
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SignUpPage())),
+                onTap: () => {
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const SignUpPage()))
+                },
                 child: const Text(
-                  "Don't have an account? Sign up",
-                  style: TextStyle(color: Colors.blue),
+                  "Don't have an account?",
+                  style: TextStyle(color: Colors.white),
                 ),
               ),
               const SizedBox(height: 24.0),
 
-              // Login Butonu
               _isLoading
-                  ? CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[900]!))
+                  ? const CircularProgressIndicator()
                   : ElevatedButton(
                 onPressed: _login,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black38, // Aynı koyu gri buton
+                  backgroundColor: Colors.black38,
                   padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
                   elevation: 5,

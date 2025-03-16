@@ -1,22 +1,6 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: ProfileScreen(),
-    );
-  }
-}
-
-class ProfileScreen extends StatelessWidget {
+class ProfilePage extends StatelessWidget {
   final List<Map<String, dynamic>> books = [
     {"title": "Sefiller", "image": "assets/sefiller.jpeg", "progress": 0.7},
     {"title": "Don Kişot", "image": "assets/donkisot.jpeg", "progress": 0.5},
@@ -29,23 +13,13 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[500], // Arka plan rengi
+      backgroundColor: Colors.grey[500],
       appBar: AppBar(
-        backgroundColor: Colors.grey[500], // AppBar rengi gri
+        backgroundColor: Colors.grey[500],
         elevation: 0,
-        title: Text(
-          "LiBook",
-          style: TextStyle(
-            color: Colors.black45,
-            fontFamily: "Caveat", // Tanımladığın fontu burada kullanıyorsun
-            fontSize: 30,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: false, // Solda hizalanmasını sağlamak için
         actions: [
           IconButton(
-            icon: Icon(Icons.settings, color: Colors.black45),
+            icon: const Icon(Icons.settings, color: Colors.black45),
             onPressed: () {},
           ),
         ],
@@ -53,32 +27,32 @@ class ProfileScreen extends StatelessWidget {
 
       body: Column(
         children: [
-          // Profil Bilgileri
+          // Profile Information
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                CircleAvatar(
+                const CircleAvatar(
                   radius: 40,
                   backgroundImage: AssetImage("assets/pp.jpeg"),
                 ),
-                SizedBox(height: 8),
-                Text(
+                const SizedBox(height: 8),
+                const Text(
                   "Name Surname",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 ElevatedButton(
                   onPressed: () {},
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey[700], // Buton rengi gri
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5), // Daha ince ve uzun
-                    textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold), // Yazı rengi beyaz
+                    backgroundColor: Colors.grey[700],
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5), // Longer and thinner
+                    textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10), // Daha az yuvarlak köşeler
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: Text("Edit profile", style: TextStyle(color: Colors.white)),
+                  child: const Text("Edit profile", style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
@@ -91,23 +65,23 @@ class ProfileScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(10), // Yuvarlak köşeler
+                  borderRadius: BorderRadius.circular(10), // Circle corners
                   child: LinearProgressIndicator(
                     value: 0.5,
                     backgroundColor: Colors.grey[300],
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      Colors.lightGreen.shade700, // Seviye çubuğu rengi
+                      Colors.lightGreen.shade700, // Level line color
                     ),
                     minHeight: 6,
                   ),
                 ),
-                SizedBox(height: 7),
-                Text("Level 1"),
+                const SizedBox(height: 7),
+                const Text("Level 1"),
               ],
             ),
           ),
 
-          // Butonlar (Hizalı ve Çizgili)
+          // Buttons
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: Column(
@@ -118,110 +92,76 @@ class ProfileScreen extends StatelessWidget {
                     ElevatedButton(
                       onPressed: () {},
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black38, // Buton rengi gri
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), // Daha az yuvarlak köşeler
+                        backgroundColor: Colors.black38,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), // Less circle corners
                       ),
-                      child: Text("Current Reads", style: TextStyle(color: Colors.white)),
+                      child: const Text("Current Reads", style: TextStyle(color: Colors.white)),
                     ),
                     Container(
                       height: 30,
                       width: 1.5,
                       color: Colors.black54,
-                      margin: EdgeInsets.symmetric(horizontal: 10),
+                      margin: const EdgeInsets.symmetric(horizontal: 10),
                     ),
                     ElevatedButton(
                       onPressed: () {},
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black26, // Buton rengi gri
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), // Daha az yuvarlak köşeler
+                        backgroundColor: Colors.black26, // Button color gray
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), // Less circle corners
                       ),
-                      child: Text("Completed Reads", style: TextStyle(color: Colors.white)),
+                      child: const Text("Completed Reads", style: TextStyle(color: Colors.white)),
                     ),
                     Container(
                       height: 30,
                       width: 1.5,
                       color: Colors.black54,
-                      margin: EdgeInsets.symmetric(horizontal: 10),
+                      margin: const EdgeInsets.symmetric(horizontal: 10),
                     ),
                     ElevatedButton(
                       onPressed: () {},
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black26, // Buton rengi gri
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold), // Yazı rengi beyaz
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), // Daha az yuvarlak köşeler
+                        backgroundColor: Colors.black26,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                       ),
-                      child: Text("My Books", style: TextStyle(color: Colors.white)),
+                      child: const Text("My Books", style: TextStyle(color: Colors.white)),
                     ),
                   ],
                 ),
 
-                // "Completed Reads" butonunun altındaki çizgi
+                // Line under the "Completed Reads" buttons
                 Container(
                   width: 110,
                   height: 1.5,
                   color: Colors.black54,
-                  margin: EdgeInsets.only(top: 4, right: 230), // Üstten biraz boşluk bırak
+                  margin: const EdgeInsets.only(top: 4, right: 230),
                 ),
               ],
             ),
           ),
 
-          // Kitap Listesi (2 Satır Halinde)
+          // Books List (2 row)
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                buildBookRow(books.sublist(0, 3)), // İlk üç kitap (üst sıra)
-                SizedBox(height: 10), // Satırlar arası boşluk
-                buildBookRow(books.sublist(3, 6)), // Sonraki üç kitap (alt sıra)
+                buildBookRow(books.sublist(0, 3)), // First three books
+                const SizedBox(height: 10),
+                buildBookRow(books.sublist(3, 6)), // Next three books
               ],
             ),
-          ),
-        ],
-      ),
-
-      // Bottom Navigation Bar
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.grey[600], // Alt navigasyon çubuğu rengi gri
-        items: [
-          BottomNavigationBarItem(
-            icon: Center(
-              child: Image.asset('assets/book.png', width: 25, height: 25),
-            ),
-            label: "", // İkonun altındaki yazıyı kaldırdık
-          ),
-          BottomNavigationBarItem(
-            icon: Center(
-              child: Icon(Icons.search, size: 30),
-            ),
-            label: "", // İkonun altındaki yazıyı kaldırdık
-          ),
-          BottomNavigationBarItem(
-            icon: Center(
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 3), // Çerçeve rengi ve kalınlığı
-                ),
-                child: CircleAvatar(
-                  radius: 13,
-                  backgroundImage: AssetImage("assets/pp.jpeg"), // İçine fotoğraf ekleyin
-                ),
-              ),
-            ),
-            label: "", // İkonun altındaki yazıyı kaldırdık
           ),
         ],
       ),
     );
   }
 
-  // Kitap Sırası Oluşturucu
+  // Kitap List maker
   Widget buildBookRow(List<Map<String, dynamic>> rowBooks) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -232,13 +172,13 @@ class ProfileScreen extends StatelessWidget {
             children: [
               Container(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10), // Yuvarlak köşeler
+                  borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.5), // Gölgenin rengi
-                      spreadRadius: 7, // Gölgenin yayılma alanı
-                      blurRadius: 5, // Gölgenin bulanıklığı
-                      offset: Offset(0, 3), // Gölgenin konumu
+                      color: Colors.black.withOpacity(0.5),
+                      spreadRadius: 7,
+                      blurRadius: 5,
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
@@ -249,25 +189,25 @@ class ProfileScreen extends StatelessWidget {
                   fit: BoxFit.cover,
                 ),
               ),
-              SizedBox(height: 4),
-              Container(
+              const SizedBox(height: 4),
+              SizedBox(
                 width: 100,
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10), // Yuvarlak köşeler
+                  borderRadius: BorderRadius.circular(10),
                   child: LinearProgressIndicator(
                     value: book["progress"],
                     backgroundColor: Colors.grey[300],
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      Colors.lightGreen.shade700, // Kitap çubuğu rengi
+                      Colors.lightGreen.shade700,
                     ),
                     minHeight: 6,
                   ),
                 ),
               ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Text(
                 book["title"]!,
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.normal),
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.normal),
                 textAlign: TextAlign.center,
               ),
             ],
