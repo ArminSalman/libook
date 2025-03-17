@@ -39,6 +39,8 @@ dependencies:
   sqflite: ^2.4.1
   path_provider: ^2.1.5
   permission_handler: ^11.4.0
+  crypto: ^3.0.6
+  shared_preferences: ^2.5.2
 
 dev_dependencies:
   flutter_test:

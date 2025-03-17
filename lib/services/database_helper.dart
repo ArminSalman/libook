@@ -14,15 +14,21 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDB(String filePath) async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, filePath);
+    try {
+      final dbPath = await getDatabasesPath();
+      final path = join(dbPath, filePath);
 
-    return await openDatabase(
-      path,
-      version: 1,
-      onCreate: _createDB,
-    );
+      return await openDatabase(
+        path,
+        version: 1,
+        onCreate: _createDB,
+      );
+    } catch (e) {
+      print('Database initialization error: $e');
+      rethrow;
+    }
   }
+
 
   Future<void> _createDB(Database db, int version) async {
     await db.execute('''
@@ -32,13 +38,14 @@ class DatabaseHelper {
         first_name TEXT NOT NULL,
         last_name TEXT NOT NULL,
         email TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL,
+        password TEXT NOT NULL
       )
     ''');
   }
 
   Future<int> insertUser(Map<String, dynamic> user) async {
-    final db = await instance.database;
+    final db = await DatabaseHelper.instance.database;
+    print("Stored password: " + user['password']);
     return await db.insert('users', user);
   }
 

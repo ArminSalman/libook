@@ -1,7 +1,14 @@
 import 'database_helper.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class UserControl {
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+
+  String hashPassword(String password) {
+    return sha256.convert(utf8.encode(password)).toString();
+  }
 
   Future<int> addUser({
     required String username,
@@ -15,7 +22,7 @@ class UserControl {
       'first_name': firstName,
       'last_name': lastName,
       'email': email,
-      'password': password, // Not: Şifreyi hashleyerek saklamanız önerilir.
+      'password': hashPassword(password),
     };
     return await _dbHelper.insertUser(user);
   }
@@ -38,5 +45,20 @@ class UserControl {
     for (var user in users) {
       print("ID: ${user['id']}, Username: ${user['username']}, Email: ${user['email']}, Password: ${user['password']}");
     }
+  }
+
+  Future<void> saveUserSession(String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('loggedInUser', email);
+  }
+
+  Future<String?> getUserSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('loggedInUser');
+  }
+
+  Future<void> logoutUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('loggedInUser');
   }
 }

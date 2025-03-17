@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:libook/home_page.dart';
+import 'package:libook/services/database_helper.dart';
 import 'package:libook/signup_page.dart';
+import 'package:sqflite/sqflite.dart';
 import 'services/user_control.dart';
+import 'package:crypto/crypto.dart';
+import 'services/database_helper.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -33,10 +37,17 @@ class _LoginPageState extends State<LoginPage> {
     final users = await _userControl.getUsers();
     final email = _emailController.text;
     final password = _passwordController.text;
+    final hashedPassword = _userControl.hashPassword(password);
 
-    final user = users.firstWhere(
-          (u) => u['email'] == email && u['password'] == password,
-      orElse: () => {},
+    print(hashedPassword);
+
+    final dbHelper = DatabaseHelper.instance;
+    final db = await dbHelper.database;
+
+    final user = await db.query(
+      'users',
+      where: 'email = ? AND password = ?',
+      whereArgs: [email, hashedPassword],
     );
 
     setState(() => _isLoading = false);

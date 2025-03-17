@@ -38,18 +38,22 @@ class _SignUpPageState extends State<SignUpPage> {
   void _signUp() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
+      print(0);
 
       await _userControl.addUser(
         username: _usernameController.text,
         firstName: _firstNameController.text,
         lastName: _lastNameController.text,
         email: _emailController.text,
-        password: _passwordController.text,
+        password: _passwordController.text
       );
-
+      print(1);
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Sign-up successful!')),
+      );
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const LoginPage()),
       );
     }
   }

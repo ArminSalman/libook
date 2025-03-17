@@ -57,30 +57,6 @@ class ProfilePage extends StatelessWidget {
               ],
             ),
           ),
-
-          // Seviye Çubuğu
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 150.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10), // Circle corners
-                  child: LinearProgressIndicator(
-                    value: 0.5,
-                    backgroundColor: Colors.grey[300],
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      Colors.lightGreen.shade700, // Level line color
-                    ),
-                    minHeight: 6,
-                  ),
-                ),
-                const SizedBox(height: 7),
-                const Text("Level 1"),
-              ],
-            ),
-          ),
-
           // Buttons
           Padding(
             padding: const EdgeInsets.all(12.0),
@@ -97,7 +73,7 @@ class ProfilePage extends StatelessWidget {
                         textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), // Less circle corners
                       ),
-                      child: const Text("Current Reads", style: TextStyle(color: Colors.white)),
+                      child: const Text("Favorites", style: TextStyle(color: Colors.white)),
                     ),
                     Container(
                       height: 30,
@@ -113,33 +89,17 @@ class ProfilePage extends StatelessWidget {
                         textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), // Less circle corners
                       ),
-                      child: const Text("Completed Reads", style: TextStyle(color: Colors.white)),
-                    ),
-                    Container(
-                      height: 30,
-                      width: 1.5,
-                      color: Colors.black54,
-                      margin: const EdgeInsets.symmetric(horizontal: 10),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black26,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                      ),
-                      child: const Text("My Books", style: TextStyle(color: Colors.white)),
+                      child: const Text("My Comments", style: TextStyle(color: Colors.white)),
                     ),
                   ],
                 ),
 
                 // Line under the "Completed Reads" buttons
                 Container(
-                  width: 110,
+                  width: 80,
                   height: 1.5,
                   color: Colors.black54,
-                  margin: const EdgeInsets.only(top: 4, right: 230),
+                  margin: const EdgeInsets.only(top: 4, right: 125),
                 ),
               ],
             ),
@@ -190,20 +150,6 @@ class ProfilePage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              SizedBox(
-                width: 100,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: LinearProgressIndicator(
-                    value: book["progress"],
-                    backgroundColor: Colors.grey[300],
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      Colors.lightGreen.shade700,
-                    ),
-                    minHeight: 6,
-                  ),
-                ),
-              ),
               const SizedBox(height: 4),
               Text(
                 book["title"]!,
