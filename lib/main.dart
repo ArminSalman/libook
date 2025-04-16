@@ -1,9 +1,35 @@
 import 'package:flutter/material.dart';
 import 'welcome_page.dart';
+import 'models/app_user.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
+
+class UserProvider extends ChangeNotifier {
+  AppUser? _user;
+
+  AppUser? get user => _user;
+
+  void setUser(AppUser user) {
+    _user = user;
+    notifyListeners();
+  }
+
+  void logout() {
+    _user = null;
+    notifyListeners();
+  }
+}
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:libook/home_page.dart';
 import 'package:libook/services/database_helper.dart';
 import 'package:libook/signup_page.dart';
-import 'package:sqflite/sqflite.dart';
 import 'services/user_control.dart';
-import 'package:crypto/crypto.dart';
-import 'services/database_helper.dart';
+import 'models/app_user.dart';
+import 'package:provider/provider.dart';
+import 'main.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -53,6 +53,12 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = false);
 
     if (user.isNotEmpty) {
+      final loggedInUser = AppUser(
+          id: user[0]['id'] as int,
+          email: user[0]['email'] as String,);
+
+      Provider.of<UserProvider>(context, listen: false).setUser(loggedInUser);
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomePage()),

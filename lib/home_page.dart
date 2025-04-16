@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:libook/library_page.dart';
 import 'package:libook/profile_page.dart';
+import 'services/google_books_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -58,43 +59,121 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final GoogleBooksService _booksService = GoogleBooksService();
+
+  final List<Map<String, String>> _categories = [
+    {'title': 'Trending', 'query': 'bestsellers'},
+    {'title': 'Science', 'query': 'science'},
+    {'title': 'History', 'query': 'history'},
+    {'title': 'Fantasy', 'query': 'fantasy'},
+  ];
+
+  final Map<String, List<dynamic>> _booksByCategory = {};
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAllCategories();
+  }
+
+  Future<void> _fetchAllCategories() async {
+    for (var category in _categories) {
+      final query = category['query']!;
+      try {
+        final books = await _booksService.searchBooks(query);
+        _booksByCategory[query] = books.take(10).toList(); // max 10 kitap
+      } catch (e) {
+        debugPrint("Error fetching $query books: $e");
+        _booksByCategory[query] = [];
+      }
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Padding(
+    return _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : ListView(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Welcome, User!",
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            "Discover new books and explore your collection",
-            style: TextStyle(fontSize: 16, color: Colors.black),
-          ),
-          const SizedBox(height: 20),
-          Expanded(
-            child: GridView.count(
-              crossAxisCount: 2,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              children: const [
-                CategoryCard(title: "Most Read", icon: Icons.menu_book),
-                CategoryCard(title: "Science", icon: Icons.science),
-                CategoryCard(title: "History", icon: Icons.history),
-                CategoryCard(title: "Philosophy", icon: Icons.psychology),
-                CategoryCard(title: "Biography", icon: Icons.person),
-                CategoryCard(title: "Fantasy", icon: Icons.auto_stories),
-              ],
-            ),
-          ),
-        ],
-      ),
+      children: [
+        const Text(
+          "Welcome, User!",
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          "Explore curated categories",
+          style: TextStyle(fontSize: 16, color: Colors.black54),
+        ),
+        const SizedBox(height: 24),
+
+        // Her kategori için yatay kitap listesi
+        ..._categories.map((category) {
+          final title = category['title']!;
+          final query = category['query']!;
+          final books = _booksByCategory[query] ?? [];
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                    fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 180,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: books.length,
+                  itemBuilder: (context, index) {
+                    final book = books[index]['volumeInfo'];
+                    final image = book['imageLinks']?['thumbnail'];
+
+                    return Container(
+                      width: 120,
+                      margin: const EdgeInsets.only(right: 12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: Colors.white,
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          )
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: image != null
+                            ? Image.network(image, fit: BoxFit.cover)
+                            : const Center(
+                            child: Icon(Icons.book, size: 40)),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          );
+        }).toList(),
+      ],
     );
   }
 }

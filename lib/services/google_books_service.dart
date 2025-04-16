@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class GoogleBooksService {
-  final String apiKey = 'AIzaSyC_8WXvcncMJYcysOQ5Lg7qqZdNwdavNMc';
+  final String apiKey = 'AIzaSyBJMvahNX8YQwjFfr_3sYf5fgXpQU6TejA';
 
   Future<List<dynamic>> searchBooks(String query) async {
     final url = Uri.parse(
