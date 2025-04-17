@@ -35,6 +35,10 @@ class UserControl {
     return await _dbHelper.getUserById(id);
   }
 
+  Future<Map<String, dynamic>?> getUserByEmail(String email) async {
+    return await _dbHelper.getUserByEmail(email);
+  }
+
   Future<int> updateUser(int id, Map<String, dynamic> updatedUser) async {
     updatedUser['id'] = id;
     return await _dbHelper.updateUser(updatedUser);

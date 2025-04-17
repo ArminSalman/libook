@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
+
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
@@ -56,11 +57,7 @@ class DatabaseHelper {
 
   Future<Map<String, dynamic>?> getUserById(int id) async {
     final db = await instance.database;
-    final result = await db.query(
-      'users',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    final result = await db.query('users', where: 'id = ?', whereArgs: [id]);
     return result.isNotEmpty ? result.first : null;
   }
 
