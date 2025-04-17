@@ -42,7 +42,6 @@ class _ProfilePageState extends State<ProfilePage> {
     TextEditingController surnameController = TextEditingController(text: userData?['last_name'] ?? "");
     TextEditingController emailController = TextEditingController(text: userData?['email'] ?? "");
     TextEditingController usernameController = TextEditingController(text: userData?['username'] ?? "");
-    TextEditingController passwordController = TextEditingController(text: userData?['password'] ?? "");
 
     showDialog(
       context: context,
@@ -111,18 +110,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               const SizedBox(height: 12),
-              // Password field with an icon
-              TextField(
-                controller: passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: "Password",
-                  prefixIcon: Icon(Icons.lock, color: Colors.grey),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  filled: true,
-                  fillColor: Colors.grey[200],
-                ),
-              ),
             ],
           ),
         ),
@@ -144,7 +131,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 'first_name': nameController.text,
                 'last_name': surnameController.text,
                 'email': emailController.text,
-                'password': passwordController.text,
+                'password': userData?['password'],
               };
               await userControl.updateUser(userData?['id'], updatedUser);
               Navigator.pop(context);
