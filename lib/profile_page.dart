@@ -46,17 +46,19 @@ class _ProfilePageState extends State<ProfilePage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.grey[700],
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(15), // Rounded corners for the dialog box
         ),
-        title: const Text(
+        title: const Center(
+          child: Text(
           "Edit Profile",
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
             color: Colors.black87,
           ),
+        ),
         ),
         content: SingleChildScrollView(
           child: Column(
@@ -67,10 +69,14 @@ class _ProfilePageState extends State<ProfilePage> {
                 controller: usernameController,
                 decoration: InputDecoration(
                   labelText: "Username",
-                  prefixIcon: Icon(Icons.person, color: Colors.grey),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  labelStyle: const TextStyle(color: Colors.black),
+                  prefixIcon: Icon(Icons.person, color: Colors.grey[800]),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.black, width: 5),
+                  ),
                   filled: true,
-                  fillColor: Colors.grey[200],
+                  fillColor: Colors.grey[600],
                 ),
               ),
               const SizedBox(height: 12),
@@ -79,22 +85,31 @@ class _ProfilePageState extends State<ProfilePage> {
                 controller: nameController,
                 decoration: InputDecoration(
                   labelText: "Name",
-                  prefixIcon: Icon(Icons.account_circle, color: Colors.grey),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  labelStyle: const TextStyle(color: Colors.black),
+                  prefixIcon: Icon(Icons.account_circle, color: Colors.grey[800]),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.black, width: 5),
+                  ),
                   filled: true,
-                  fillColor: Colors.grey[200],
+                  fillColor: Colors.grey[600],
                 ),
               ),
+
               const SizedBox(height: 12),
               // Surname field with an icon
               TextField(
                 controller: surnameController,
                 decoration: InputDecoration(
                   labelText: "Surname",
-                  prefixIcon: Icon(Icons.account_box, color: Colors.grey),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  labelStyle: const TextStyle(color: Colors.black),
+                  prefixIcon: Icon(Icons.account_box, color: Colors.grey[800]),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.black, width: 5),
+                  ),
                   filled: true,
-                  fillColor: Colors.grey[200],
+                  fillColor: Colors.grey[600],
                 ),
               ),
               const SizedBox(height: 12),
@@ -103,12 +118,17 @@ class _ProfilePageState extends State<ProfilePage> {
                 controller: emailController,
                 decoration: InputDecoration(
                   labelText: "Email",
-                  prefixIcon: Icon(Icons.email, color: Colors.grey),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  labelStyle: const TextStyle(color: Colors.black),
+                  prefixIcon: Icon(Icons.email, color: Colors.grey[800]),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.black, width: 5),
+                  ),
                   filled: true,
-                  fillColor: Colors.grey[200],
+                  fillColor: Colors.grey[600],
                 ),
               ),
+
               const SizedBox(height: 12),
             ],
           ),
@@ -119,7 +139,7 @@ class _ProfilePageState extends State<ProfilePage> {
             onPressed: () => Navigator.pop(context),
             child: const Text(
               "Cancel",
-              style: TextStyle(color: Colors.blueAccent),
+              style: TextStyle(color: Colors.black),
             ),
           ),
           // Save button with a rounded shape and custom color
@@ -140,11 +160,12 @@ class _ProfilePageState extends State<ProfilePage> {
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
               textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              backgroundColor: Colors.grey[800],
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
               ),
             ),
-            child: const Text("Save"),
+            child: const Text("Save", style: TextStyle(color: Colors.black54),),
           ),
         ],
       ),
@@ -196,7 +217,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ElevatedButton(
                   onPressed: _showEditDialog,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey[700],
+                    backgroundColor: Colors.grey[600],
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 5),
                     textStyle: const TextStyle(
