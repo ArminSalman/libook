@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:libook/library_page.dart';
 import 'package:libook/profile_page.dart';
 import 'services/google_books_service.dart';
+import 'services/user_control.dart';
+import 'services/favorite_books_control.dart';
+import 'package:provider/provider.dart';
+import 'main.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -11,13 +15,12 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _currentIndex = 0; // Track the selected tab
+  int _currentIndex = 0;
 
-  // List of pages/screens for each tab
   final List<Widget> _pages = [
-    const HomeScreen(), // Home page (your existing page)
+    const HomeScreen(),
     const LibraryPage(),
-    ProfilePage(),
+    const ProfilePage(),
   ];
 
   @override
@@ -38,15 +41,15 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: _pages[_currentIndex], // Display the selected page
+      body: _pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.grey[800],
         selectedItemColor: Colors.white,
         unselectedItemColor: Colors.grey[400],
-        currentIndex: _currentIndex, // Set the current tab index
+        currentIndex: _currentIndex,
         onTap: (index) {
           setState(() {
-            _currentIndex = index; // Update the selected tab
+            _currentIndex = index;
           });
         },
         items: const [
@@ -68,6 +71,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final GoogleBooksService _booksService = GoogleBooksService();
+  final FavoriteBooksControl _favoritesControl = FavoriteBooksControl();
 
   final List<Map<String, String>> _categories = [
     {'title': 'Trending', 'query': 'bestsellers'},
@@ -77,12 +81,32 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   final Map<String, List<dynamic>> _booksByCategory = {};
+  Set<String> _favoritedBookIds = {};
+
+  int? _userId;
   bool _isLoading = true;
+
+  UserControl userControl = UserControl();
 
   @override
   void initState() {
     super.initState();
     _fetchAllCategories();
+    getUserInfo();
+  }
+
+  Future<void> getUserInfo() async {
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    if (user != null) {
+      final info = await userControl.getUserByEmail(user.email);
+      if (info != null) {
+        _userId = info['id'];
+        await _fetchFavorites();
+      }
+    }
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   Future<void> _fetchAllCategories() async {
@@ -90,16 +114,44 @@ class _HomeScreenState extends State<HomeScreen> {
       final query = category['query']!;
       try {
         final books = await _booksService.searchBooks(query);
-        _booksByCategory[query] = books.take(10).toList(); // max 10 kitap
+        _booksByCategory[query] = books.take(10).toList();
       } catch (e) {
         debugPrint("Error fetching $query books: $e");
         _booksByCategory[query] = [];
       }
     }
+    setState(() {});
+  }
 
+  Future<void> _fetchFavorites() async {
+    if (_userId == null) return;
+    final favorites = await _favoritesControl.getFavoriteBooks(_userId!);
     setState(() {
-      _isLoading = false;
+      _favoritedBookIds = favorites.toSet();
     });
+  }
+
+  Future<void> _toggleFavorite(int bookId) async {
+    if (_userId == null) return;
+
+    final isFav = await _favoritesControl.isFavorite(_userId!, bookId);
+    bool success = false;
+
+    if (isFav) {
+      success = await _favoritesControl.removeFromFavorites(_userId!, bookId);
+      if (success) {
+        setState(() {
+          _favoritedBookIds.remove(bookId);
+        });
+      }
+    } else {
+      success = await _favoritesControl.addToFavorites(_userId!, bookId) > 0;
+      if (success) {
+        setState(() {
+          _favoritedBookIds.add(bookId as String);
+        });
+      }
+    }
   }
 
   @override
@@ -109,18 +161,12 @@ class _HomeScreenState extends State<HomeScreen> {
         : ListView(
       padding: const EdgeInsets.all(16.0),
       children: [
-        const Text(
-          "Welcome, User!",
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
         const SizedBox(height: 8),
         const Text(
           "Explore curated categories",
           style: TextStyle(fontSize: 16, color: Colors.black54),
         ),
         const SizedBox(height: 24),
-
-        // Her kategori için yatay kitap listesi
         ..._categories.map((category) {
           final title = category['title']!;
           final query = category['query']!;
@@ -143,28 +189,49 @@ class _HomeScreenState extends State<HomeScreen> {
                   itemBuilder: (context, index) {
                     final book = books[index]['volumeInfo'];
                     final image = book['imageLinks']?['thumbnail'];
+                    final bookID = books[index]['id'];
 
-                    return Container(
-                      width: 120,
-                      margin: const EdgeInsets.only(right: 12),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: Colors.white,
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 4,
-                            offset: Offset(0, 2),
-                          )
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: image != null
-                            ? Image.network(image, fit: BoxFit.cover)
-                            : const Center(
-                            child: Icon(Icons.book, size: 40)),
-                      ),
+                    final isFavorite = _favoritedBookIds.contains(bookID);
+
+                    return Stack(
+                      children: [
+                        Container(
+                          width: 120,
+                          margin: const EdgeInsets.only(right: 12),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: Colors.white,
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Colors.black12,
+                                blurRadius: 4,
+                                offset: Offset(0, 2),
+                              )
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: image != null
+                                ? Image.network(image, fit: BoxFit.cover)
+                                : const Center(
+                              child: Icon(Icons.book, size: 40),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 8,
+                          right: 8,
+                          child: IconButton(
+                            icon: Icon(
+                              isFavorite
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: isFavorite ? Colors.red : Colors.grey,
+                            ),
+                            onPressed: () => _toggleFavorite(bookID),
+                          ),
+                        ),
+                      ],
                     );
                   },
                 ),
@@ -174,36 +241,6 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         }).toList(),
       ],
-    );
-  }
-}
-
-class CategoryCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  const CategoryCard({super.key, required this.title, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 2),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 40, color: Colors.grey[700]),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
     );
   }
 }
