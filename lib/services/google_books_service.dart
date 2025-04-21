@@ -17,4 +17,17 @@ class GoogleBooksService {
       throw Exception('There was an error retrieving book data');
     }
   }
+
+  Future<Map<String, dynamic>?> getBookById(String bookId) async {
+    final url = Uri.parse('https://www.googleapis.com/books/v1/volumes/$bookId');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      print('Failed to fetch book by ID: ${response.statusCode}');
+      return null;
+    }
+  }
+
 }

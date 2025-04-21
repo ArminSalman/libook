@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'main.dart';
 import 'services/user_control.dart';
+import 'services/favorite_books_control.dart';
+import 'services/google_books_service.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -13,7 +15,11 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   bool isLoading = true;
   UserControl userControl = UserControl();
+  FavoriteBooksControl _favoritesControl = FavoriteBooksControl();
+  GoogleBooksService _booksService = GoogleBooksService();
+
   Map<String, dynamic>? userData;
+  List<Map<String, dynamic>> _favoriteBooks = [];
 
   @override
   void initState() {
@@ -28,9 +34,32 @@ class _ProfilePageState extends State<ProfilePage> {
       if (info != null) {
         setState(() {
           userData = info;
-          isLoading = false;
         });
+        await fetchFavoriteBooks(info['id']);
       }
+    }
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  Future<void> fetchFavoriteBooks(int userId) async {
+    try {
+      final bookIds = await _favoritesControl.getFavoriteBooks(userId);
+      List<Map<String, dynamic>> books = [];
+
+      for (String id in bookIds) {
+        final book = await _booksService.getBookById(id);
+        if (book != null) {
+          books.add(book);
+        }
+      }
+
+      setState(() {
+        _favoriteBooks = books;
+      });
+    } catch (e) {
+      print("Error fetching favorite books: $e");
     }
   }
 
@@ -44,102 +73,30 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.grey[700],
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15), // Rounded corners for the dialog box
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         title: const Center(
-          child: Text(
-          "Edit Profile",
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
+          child: Text("Edit Profile",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87)),
         ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Username field with an icon
-              TextField(
-                controller: usernameController,
-                decoration: InputDecoration(
-                  labelText: "Username",
-                  labelStyle: const TextStyle(color: Colors.black),
-                  prefixIcon: Icon(Icons.person, color: Colors.grey[800]),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Colors.black, width: 5),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[600],
-                ),
-              ),
+              _buildTextField("Username", usernameController, Icons.person),
               const SizedBox(height: 12),
-              // Name field with an icon
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  labelText: "Name",
-                  labelStyle: const TextStyle(color: Colors.black),
-                  prefixIcon: Icon(Icons.account_circle, color: Colors.grey[800]),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Colors.black, width: 5),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[600],
-                ),
-              ),
-
+              _buildTextField("Name", nameController, Icons.account_circle),
               const SizedBox(height: 12),
-              // Surname field with an icon
-              TextField(
-                controller: surnameController,
-                decoration: InputDecoration(
-                  labelText: "Surname",
-                  labelStyle: const TextStyle(color: Colors.black),
-                  prefixIcon: Icon(Icons.account_box, color: Colors.grey[800]),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Colors.black, width: 5),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[600],
-                ),
-              ),
+              _buildTextField("Surname", surnameController, Icons.account_box),
               const SizedBox(height: 12),
-              // Email field with an icon
-              TextField(
-                controller: emailController,
-                decoration: InputDecoration(
-                  labelText: "Email",
-                  labelStyle: const TextStyle(color: Colors.black),
-                  prefixIcon: Icon(Icons.email, color: Colors.grey[800]),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Colors.black, width: 5),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[600],
-                ),
-              ),
-
-              const SizedBox(height: 12),
+              _buildTextField("Email", emailController, Icons.email),
             ],
           ),
         ),
         actions: [
-          // Cancel button with a rounded shape and custom color
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
-              "Cancel",
-              style: TextStyle(color: Colors.black),
-            ),
+            child: const Text("Cancel", style: TextStyle(color: Colors.black)),
           ),
-          // Save button with a rounded shape and custom color
           ElevatedButton(
             onPressed: () async {
               final updatedUser = {
@@ -158,25 +115,30 @@ class _ProfilePageState extends State<ProfilePage> {
               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
               textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               backgroundColor: Colors.grey[800],
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
             ),
-            child: const Text("Save", style: TextStyle(color: Colors.black54),),
+            child: const Text("Save", style: TextStyle(color: Colors.black54)),
           ),
         ],
       ),
     );
   }
 
-  final List<Map<String, dynamic>> books = [
-    {"title": "Sefiller", "image": "assets/sefiller.jpeg", "progress": 0.7},
-    {"title": "Don Kışot", "image": "assets/donkisot.jpeg", "progress": 0.5},
-    {"title": "Martin Eden", "image": "assets/martineden.jpeg", "progress": 0.3},
-    {"title": "Beyaz Diş", "image": "assets/beyazdis.jpeg", "progress": 0.6},
-    {"title": "Savaş ve Barış", "image": "assets/savas.jpeg", "progress": 0.8},
-    {"title": "Hayvan Çiftliği", "image": "assets/hayvan.jpeg", "progress": 0.4},
-  ];
+  Widget _buildTextField(String label, TextEditingController controller, IconData icon) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.black),
+        prefixIcon: Icon(icon, color: Colors.grey[800]),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        filled: true,
+        fillColor: Colors.grey[600],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -207,24 +169,18 @@ class _ProfilePageState extends State<ProfilePage> {
                 const SizedBox(height: 8),
                 Text(
                   userData?['username'] ?? 'no username',
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 4),
                 ElevatedButton(
                   onPressed: _showEditDialog,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.grey[600],
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 5),
-                    textStyle: const TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.bold),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                    textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
-                  child: const Text("Edit profile",
-                      style: TextStyle(color: Colors.white)),
+                  child: const Text("Edit profile", style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
@@ -251,13 +207,59 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
           Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                buildBookRow(books.sublist(0, 3)),
-                const SizedBox(height: 10),
-                buildBookRow(books.sublist(3, 6)),
-              ],
+            child: _favoriteBooks.isEmpty
+                ? const Center(child: Text("No favorite books yet."))
+                : Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: GridView.builder(
+                itemCount: _favoriteBooks.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 0.65,
+                ),
+                itemBuilder: (context, index) {
+                  final book = _favoriteBooks[index]['volumeInfo'];
+                  final title = book['title'] ?? 'Unknown';
+                  final thumbnail = book['imageLinks']?['thumbnail'];
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        height: 130,
+                        width: 90,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.white,
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: thumbnail != null
+                              ? Image.network(thumbnail, fit: BoxFit.cover)
+                              : const Center(child: Icon(Icons.book, size: 40)),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        title,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
           ),
         ],
@@ -267,7 +269,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildButton(String label) {
     return ElevatedButton(
-      onPressed: () {},
+      onPressed: () {
+        // Future functionality can go here
+      },
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.black38,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -284,49 +288,6 @@ class _ProfilePageState extends State<ProfilePage> {
       width: 1.5,
       color: Colors.black54,
       margin: const EdgeInsets.symmetric(horizontal: 10),
-    );
-  }
-
-  Widget buildBookRow(List<Map<String, dynamic>> rowBooks) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: rowBooks.map((book) {
-        return Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.5),
-                      spreadRadius: 7,
-                      blurRadius: 5,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Image.asset(
-                    book["image"]!,
-                    width: 100,
-                    height: 150,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                book["title"]!,
-                style: const TextStyle(fontSize: 15),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        );
-      }).toList(),
     );
   }
 }
