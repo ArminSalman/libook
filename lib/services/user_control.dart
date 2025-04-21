@@ -9,8 +9,8 @@ class UserControl {
   String hashPassword(String password) {
     return sha256.convert(utf8.encode(password)).toString();
   }
-
-  Future<int> addUser({
+  Future<int> addUser
+({
     required String username,
     required String firstName,
     required String lastName,
