@@ -131,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  Future<void> _toggleFavorite(int bookId) async {
+  Future<void> _toggleFavorite(String bookId) async {
     if (_userId == null) return;
 
     final isFav = await _favoritesControl.isFavorite(_userId!, bookId);
@@ -148,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
       success = await _favoritesControl.addToFavorites(_userId!, bookId) > 0;
       if (success) {
         setState(() {
-          _favoritedBookIds.add(bookId as String);
+          _favoritedBookIds.add(bookId);
         });
       }
     }
