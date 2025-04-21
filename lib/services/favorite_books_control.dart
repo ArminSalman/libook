@@ -4,7 +4,7 @@ import 'package:sqflite/sqflite.dart';
 class FavoriteBooksControl {
   final _dbHelper = DatabaseHelper.instance;
 
-  Future<int> addToFavorites(int userId, int bookID) async {
+  Future<int> addToFavorites(int userId, String bookID) async {
     final db = await _dbHelper.database;
     try {
       return await db.insert(
@@ -21,7 +21,7 @@ class FavoriteBooksControl {
     }
   }
 
-  Future<bool> removeFromFavorites(int userId, int bookID) async {
+  Future<bool> removeFromFavorites(int userId, String bookID) async {
     try {
       final result = await _dbHelper.removeFavoriteBook(userId, bookID);
       return result > 0;
@@ -31,7 +31,7 @@ class FavoriteBooksControl {
     }
   }
 
-  Future<bool> isFavorite(int userId, int bookID) async {
+  Future<bool> isFavorite(int userId, String bookID) async {
     try {
       return await _dbHelper.isBookFavorited(userId, bookID);
     } catch (e) {

@@ -123,7 +123,7 @@ class DatabaseHelper {
 
   // ---------- FAVORITE BOOK OPERATIONS ----------
 
-  Future<int> addFavoriteBook(int userId, int bookID) async {
+  Future<int> addFavoriteBook(int userId, String bookID) async {
     final db = await database;
     return await db.insert(
       'favoriteBooks',
@@ -131,17 +131,27 @@ class DatabaseHelper {
         'user_id': userId,
         'book_ID': bookID,
       },
-      conflictAlgorithm: ConflictAlgorithm.ignore, // avoid duplicates
+      conflictAlgorithm: ConflictAlgorithm.ignore,
     );
   }
 
-  Future<int> removeFavoriteBook(int userId, int bookID) async {
+  Future<int> removeFavoriteBook(int userId, String bookID) async {
     final db = await database;
     return await db.delete(
       'favoriteBooks',
       where: 'user_id = ? AND book_ID = ?',
       whereArgs: [userId, bookID],
     );
+  }
+
+  Future<bool> isBookFavorited(int userId, String bookID) async {
+    final db = await database;
+    final result = await db.query(
+      'favoriteBooks',
+      where: 'user_id = ? AND book_ID = ?',
+      whereArgs: [userId, bookID],
+    );
+    return result.isNotEmpty;
   }
 
   Future<List<Map<String, dynamic>>> getUserFavorites(int userId) async {
@@ -153,13 +163,4 @@ class DatabaseHelper {
     );
   }
 
-  Future<bool> isBookFavorited(int userId, int bookID) async {
-    final db = await database;
-    final result = await db.query(
-      'favoriteBooks',
-      where: 'user_id = ? AND book_ID = ?',
-      whereArgs: [userId, bookID],
-    );
-    return result.isNotEmpty; // Returns a boolean
-  }
 }
