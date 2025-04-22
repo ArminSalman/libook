@@ -1,3 +1,4 @@
+import 'book_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:libook/library_page.dart';
 import 'package:libook/profile_page.dart';
@@ -193,7 +194,26 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     final isFavorite = _favoritedBookIds.contains(bookID);
 
-                    return Stack(
+                    return GestureDetector(
+  onTap: () {
+    final book = books[index]['volumeInfo'];
+    final image = book['imageLinks']?['thumbnail'];
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BookDetailPage(
+          book: {
+            'id': books[index]['id'],
+            'title': book['title'] ?? 'Başlıksız',
+            'authors': (book['authors'] as List?)?.join(', ') ?? 'Yazar bilgisi yok',
+            'description': book['description'] ?? 'Açıklama bulunamadı.',
+            'thumbnail': image,
+          },
+        ),
+      ),
+    );
+  },
+  child: Stack(
                       children: [
                         Container(
                           width: 120,
@@ -232,6 +252,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ],
+                    ),
                     );
                   },
                 ),

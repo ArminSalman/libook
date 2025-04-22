@@ -1,3 +1,4 @@
+import 'book_detail_page.dart';
 import 'package:flutter/material.dart';
 
 class LibraryPage extends StatelessWidget {
