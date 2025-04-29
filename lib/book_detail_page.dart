@@ -1,8 +1,8 @@
 import 'main.dart';
 import 'package:provider/provider.dart';
-
 import 'package:flutter/material.dart';
-import 'services/comment_service.dart';
+import 'services/comment_control.dart';
+import 'services/database_helper.dart';
 import 'package:intl/intl.dart';
 
 class BookDetailPage extends StatefulWidget {
@@ -16,8 +16,8 @@ class BookDetailPage extends StatefulWidget {
 
 class _BookDetailPageState extends State<BookDetailPage> {
   final TextEditingController _commentController = TextEditingController();
-  List<Comment> comments = [];
-  final String currentUserId = "demo_user"; // Giriş yapan kullanıcıya göre güncellenebilir
+  List<CommentControl> comments = [];
+  final String currentUserId = "demo_user"; // Güncel kullanıcı ID'siyle değiştirilebilir
 
   @override
   void initState() {
@@ -25,31 +25,38 @@ class _BookDetailPageState extends State<BookDetailPage> {
     _loadComments();
   }
 
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadComments() async {
-    final loadedComments = await CommentService.getComments(
-      widget.book['id'] ?? widget.book['title'],
+    final bookKey = (widget.book['id'] ?? widget.book['title']).toString();
+    final maps = await DatabaseHelper.instance.getComments(
+      bookKey,
       currentUserId,
     );
     setState(() {
-      comments = loadedComments;
+      comments = maps.map((m) => CommentControl.fromMap(m)).toList();
     });
   }
 
   Future<void> _addComment() async {
     final content = _commentController.text.trim();
-    if (content.isNotEmpty) {
-      final user = Provider.of<UserProvider>(context, listen: false).user;
-    final comment = Comment(
-        bookId: widget.book['id'] ?? widget.book['title'],
-        userId: currentUserId,
-      username: user?.email ?? "Anonymous",
+    if (content.isEmpty) return;
+
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    final comment = CommentControl(
+      bookId: (widget.book['id'] ?? widget.book['title']).toString(),
+      userId: currentUserId,
+      username: user?.email ?? 'Anonymous',
       content: content,
-        timestamp: DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
-      );
-      await CommentService.addComment(comment);
-      _commentController.clear();
-      _loadComments();
-    }
+      timestamp: DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
+    );
+    await comment.addComment();
+    _commentController.clear();
+    _loadComments();
   }
 
   @override
@@ -87,11 +94,13 @@ class _BookDetailPageState extends State<BookDetailPage> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              ...comments.map((comment) => ListTile(
-                    leading: const Icon(Icons.comment),
-                    title: Text(comment.content),
-                    subtitle: Text("${comment.username} • ${comment.timestamp}"),
-                  )),
+              ...comments.map(
+                    (c) => ListTile(
+                  leading: const Icon(Icons.comment),
+                  title: Text(c.content),
+                  subtitle: Text('${c.username} • ${c.timestamp}'),
+                ),
+              ),
               const SizedBox(height: 16),
               TextField(
                 controller: _commentController,
@@ -103,7 +112,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                     onPressed: _addComment,
                   ),
                 ),
-              )
+              ),
             ],
           ),
         ),
