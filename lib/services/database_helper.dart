@@ -61,6 +61,19 @@ class DatabaseHelper {
         )
       ''');
     }
+
+    if (oldVersion < 4) {
+      await db.execute('''
+    CREATE TABLE IF NOT EXISTS notifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      bookId TEXT NOT NULL UNIQUE,
+      content TEXT NOT NULL,
+      date TEXT NOT NULL,
+      time TEXT NOT NULL
+    )
+  ''');
+    }
+
   }
 
   /// Fresh install: build all tables
@@ -95,6 +108,17 @@ class DatabaseHelper {
         timestamp TEXT
       )
     ''');
+
+    await db.execute('''
+  CREATE TABLE notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    bookId TEXT NOT NULL UNIQUE,
+    content TEXT NOT NULL,
+    date TEXT NOT NULL,
+    time TEXT NOT NULL
+  )
+''');
+
   }
 
   // ---------- USER OPERATIONS ----------
@@ -189,6 +213,42 @@ class DatabaseHelper {
       whereArgs: [bookId, userId],
       orderBy: 'timestamp DESC',
     );
+  }
+
+  // Bildirim ekle
+  Future<int> addNotification(String bookId, String content) async {
+    final db = await database;
+    final now = DateTime.now();
+    final date = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+    final time = "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
+
+    return await db.insert(
+      'notifications',
+      {
+        'bookId': bookId,
+        'content': content,
+        'date': date,
+        'time': time,
+      },
+      conflictAlgorithm: ConflictAlgorithm.ignore, // aynı kitap tekrar eklenmesin
+    );
+  }
+
+// Daha önce önerildi mi?
+  Future<bool> isBookAlreadyNotified(String bookId) async {
+    final db = await database;
+    final result = await db.query(
+      'notifications',
+      where: 'bookId = ?',
+      whereArgs: [bookId],
+    );
+    return result.isNotEmpty;
+  }
+
+// Bildirim geçmişini al (isteğe bağlı)
+  Future<List<Map<String, dynamic>>> getAllNotifications() async {
+    final db = await database;
+    return await db.query('notifications', orderBy: 'date DESC, time DESC');
   }
 
 }
