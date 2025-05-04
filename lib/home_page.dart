@@ -1,3 +1,5 @@
+import 'package:libook/notification_page.dart';
+
 import 'book_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:libook/library_page.dart';
@@ -38,7 +40,14 @@ class _HomePageState extends State<HomePage> {
           ),
           IconButton(
             icon: const Icon(Icons.notifications, color: Colors.white),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationPage(),
+                ),
+              );
+            },
           ),
         ],
       ),
