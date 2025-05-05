@@ -49,4 +49,8 @@ class CommentControl {
   Future<List<Map<String, dynamic>>> getComments(String bookId, String userId) async {
     return await _dbHelper.getComments(bookId, userId);
   }
+  Future<List<Map<String, dynamic>>> getAllUserComments(String email) async {
+    return await _dbHelper.getAllUserComments(email);
+  }
+
 }
