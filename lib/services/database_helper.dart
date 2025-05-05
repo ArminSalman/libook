@@ -214,6 +214,25 @@ class DatabaseHelper {
       orderBy: 'timestamp DESC',
     );
   }
+  Future<List<Map<String, dynamic>>> getAllUserComments(String userId) async {
+    final db = await database;
+    return await db.query(
+      'comments',
+      where: 'userId = ?',
+      whereArgs: [userId],
+      orderBy: 'timestamp DESC',
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getCommentsByUser(String email) async {
+    final db = await database;
+    return db.query(
+      'comments',
+      where: 'email = ?',
+      whereArgs: [email],
+      orderBy: 'timestamp DESC',
+    );
+  }
 
   // Bildirim ekle
   Future<int> addNotification(String bookId, String content) async {
