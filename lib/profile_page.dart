@@ -4,6 +4,7 @@ import 'main.dart';
 import 'services/user_control.dart';
 import 'services/favorite_books_control.dart';
 import 'services/google_books_service.dart';
+import 'services/comment_control.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -14,12 +15,22 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   bool isLoading = true;
+  bool _showingComments = false;
+
   UserControl userControl = UserControl();
   FavoriteBooksControl _favoritesControl = FavoriteBooksControl();
   GoogleBooksService _booksService = GoogleBooksService();
+  CommentControl _commentControl = CommentControl(
+    bookId: '',
+    userId: '',
+    username: '',
+    content: '',
+    timestamp: '',
+  );
 
   Map<String, dynamic>? userData;
   List<Map<String, dynamic>> _favoriteBooks = [];
+  List<Map<String, dynamic>> _userComments = [];
 
   @override
   void initState() {
@@ -57,9 +68,25 @@ class _ProfilePageState extends State<ProfilePage> {
 
       setState(() {
         _favoriteBooks = books;
+        _showingComments = false;
       });
     } catch (e) {
       print("Error fetching favorite books: $e");
+    }
+  }
+
+  Future<void> fetchUserComments(int userId) async {
+    try {
+      print(userData?['id']);
+      String sUserId = userId.toString();
+      final comments = await _commentControl.getUserCommentsByUserId(sUserId);
+      setState(() {
+        _userComments = comments;
+        _showingComments = true;
+      });
+      print(comments);
+    } catch (e) {
+      print("Error fetching comments: $e");
     }
   }
 
@@ -192,9 +219,17 @@ class _ProfilePageState extends State<ProfilePage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _buildButton("Favorites"),
+                    _buildButton("Favorites", () {
+                      if (userData?['id'] != null) {
+                        fetchFavoriteBooks(userData!['id']);
+                      }
+                    }),
                     _divider(),
-                    _buildButton("My Comments"),
+                    _buildButton("My Comments", () {
+                      if (userData?['email'] != null) {
+                        fetchUserComments(userData?['id']);
+                      }
+                    }),
                   ],
                 ),
                 Container(
@@ -207,7 +242,18 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
           Expanded(
-            child: _favoriteBooks.isEmpty
+            child: _showingComments
+                ? ListView.builder(
+              itemCount: _userComments.length,
+              itemBuilder: (context, index) {
+                final comment = _userComments[index];
+                return ListTile(
+                  title: Text(comment['content']),
+                  subtitle: Text("Book ID: ${comment['bookId']} • ${comment['timestamp']}"),
+                );
+              },
+            )
+                : _favoriteBooks.isEmpty
                 ? const Center(child: Text("No favorite books yet."))
                 : Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -267,11 +313,9 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildButton(String label) {
+  Widget _buildButton(String label, [VoidCallback? onTap]) {
     return ElevatedButton(
-      onPressed: () {
-        // Future functionality can go here
-      },
+      onPressed: onTap,
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.black38,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
