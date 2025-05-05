@@ -79,7 +79,7 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       print(userData?['id']);
       String sUserId = userId.toString();
-      final comments = await _commentControl.getUserCommentsByUserId(sUserId);
+      List<Map<String, dynamic>> comments = await _commentControl.getUserCommentsByUserId(sUserId);
       setState(() {
         _userComments = comments;
         _showingComments = true;

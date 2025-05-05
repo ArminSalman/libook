@@ -121,6 +121,8 @@ class DatabaseHelper {
 
   }
 
+  
+
   // ---------- USER OPERATIONS ----------
 
   Future<int> insertUser(Map<String, dynamic> user) async {
