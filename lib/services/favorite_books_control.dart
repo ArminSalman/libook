@@ -1,13 +1,35 @@
+import 'package:flutter/foundation.dart';
 import 'database_helper.dart';
 import 'package:sqflite/sqflite.dart';
 
-class FavoriteBooksControl {
+class FavoriteBooksControl extends ChangeNotifier {
   final _dbHelper = DatabaseHelper.instance;
 
-  Future<int> addToFavorites(int userId, String bookID) async {
+  List<String> _favoriteBooks = [];
+
+  List<String> get favoriteBooks => _favoriteBooks;
+
+  Future<void> loadFavorites(int userId) async {
+    try {
+      final favorites = await _dbHelper.getUserFavorites(userId);
+      _favoriteBooks = favorites.map((favorite) => favorite['book_ID'] as String).toList();
+      notifyListeners(); // Favoriler yüklendiğinde haber ver
+    } catch (e) {
+      print('Error loading favorites: $e');
+    }
+  }
+
+  Future<List<String>> getFavoriteBooks(int userId) async {
+    final favorites = await _dbHelper.getUserFavorites(userId);
+    return favorites.map((favorite) => favorite['book_ID'] as String).toList();
+  }
+
+
+  Future<void> addToFavorites(int userId, String bookID) async {
     final db = await _dbHelper.database;
     try {
-      return await db.insert(
+      // Veritabanına ekleme işlemi
+      await db.insert(
         'favoriteBooks',
         {
           'user_id': userId,
@@ -15,33 +37,27 @@ class FavoriteBooksControl {
         },
         conflictAlgorithm: ConflictAlgorithm.ignore,
       );
+      _favoriteBooks.add(bookID); // Favorilere ekle
+      notifyListeners(); // Dinleyicilere haber ver
     } catch (e) {
       print('Error adding book to favorites: $e');
-      return -1;
     }
   }
 
-  Future<bool> removeFromFavorites(int userId, String bookID) async {
+
+  Future<void> removeFromFavorites(int userId, String bookID) async {
     try {
       final result = await _dbHelper.removeFavoriteBook(userId, bookID);
-      return result > 0;
+      if (result > 0) {
+        _favoriteBooks.remove(bookID);
+        notifyListeners(); // Dinleyicilere haber ver
+      }
     } catch (e) {
       print('Error removing from favorites: $e');
-      return false;
     }
   }
 
-  Future<bool> isFavorite(int userId, String bookID) async {
-    try {
-      return await _dbHelper.isBookFavorited(userId, bookID);
-    } catch (e) {
-      print('Error checking favorite status: $e');
-      return false;
-    }
-  }
-
-  Future<List<String>> getFavoriteBooks(int userId) async {
-    final favorites = await _dbHelper.getUserFavorites(userId);
-    return favorites.map((favorite) => favorite['book_ID'] as String).toList();
+  bool isFavorite(int userId, String bookID) {
+    return _favoriteBooks.contains(bookID);
   }
 }

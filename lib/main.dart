@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:libook/services/favorite_books_control.dart';
 import 'welcome_page.dart';
 import 'models/app_user.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +9,7 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => FavoriteBooksControl()),
       ],
       child: const MyApp(),
     ),

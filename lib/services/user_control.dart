@@ -9,14 +9,12 @@ class UserControl {
   String hashPassword(String password) {
     return sha256.convert(utf8.encode(password)).toString();
   }
-  Future<int> addUser
-({
+  Future<int> addUser ({
     required String username,
     required String firstName,
     required String lastName,
     required String email,
-    required String password,
-  }) async {
+    required String password, }) async {
     final user = {
       'username': username,
       'first_name': firstName,
@@ -69,4 +67,4 @@ class UserControl {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('loggedInUser');
   }
-}
+  }

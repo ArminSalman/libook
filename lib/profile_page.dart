@@ -14,9 +14,9 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   bool isLoading = true;
-  UserControl userControl = UserControl();
-  FavoriteBooksControl _favoritesControl = FavoriteBooksControl();
-  GoogleBooksService _booksService = GoogleBooksService();
+  final UserControl userControl = UserControl();
+  final FavoriteBooksControl _favoritesControl = FavoriteBooksControl();
+  final GoogleBooksService _booksService = GoogleBooksService();
 
   Map<String, dynamic>? userData;
   List<Map<String, dynamic>> _favoriteBooks = [];
@@ -24,7 +24,14 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    getUserInfo();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = Provider.of<UserProvider>(context, listen: false).user;
+      if (user == null) {
+        Navigator.of(context).pushReplacementNamed('/login');
+      } else {
+        getUserInfo();
+      }
+    });
   }
 
   Future<void> getUserInfo() async {
@@ -79,17 +86,22 @@ class _ProfilePageState extends State<ProfilePage> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87)),
         ),
         content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildTextField("Username", usernameController, Icons.person),
-              const SizedBox(height: 12),
-              _buildTextField("Name", nameController, Icons.account_circle),
-              const SizedBox(height: 12),
-              _buildTextField("Surname", surnameController, Icons.account_box),
-              const SizedBox(height: 12),
-              _buildTextField("Email", emailController, Icons.email),
-            ],
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildTextField("Username", usernameController, Icons.person),
+                const SizedBox(height: 12),
+                _buildTextField("Name", nameController, Icons.account_circle),
+                const SizedBox(height: 12),
+                _buildTextField("Surname", surnameController, Icons.account_box),
+                const SizedBox(height: 12),
+                _buildTextField("Email", emailController, Icons.email),
+              ],
+            ),
           ),
         ),
         actions: [
@@ -99,15 +111,18 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           ElevatedButton(
             onPressed: () async {
+              if (userData == null) return;
+
               final updatedUser = {
                 'id': userData!['id'],
                 'username': usernameController.text,
                 'first_name': nameController.text,
                 'last_name': surnameController.text,
                 'email': emailController.text,
-                'password': userData?['password'],
+                'password': userData!['password'],
               };
-              await userControl.updateUser(userData?['id'], updatedUser);
+
+              await userControl.updateUser(userData!['id'], updatedUser);
               Navigator.pop(context);
               await getUserInfo();
             },
@@ -131,9 +146,7 @@ class _ProfilePageState extends State<ProfilePage> {
         labelText: label,
         labelStyle: const TextStyle(color: Colors.black),
         prefixIcon: Icon(icon, color: Colors.grey[800]),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         filled: true,
         fillColor: Colors.grey[600],
       ),
@@ -142,6 +155,17 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final user = Provider.of<UserProvider>(context).user;
+
+    if (user == null) {
+      return Scaffold(
+        backgroundColor: Colors.grey[500],
+        body: const Center(
+          child: Text("Lütfen giriş yapınız.", style: TextStyle(fontSize: 16, color: Colors.black54)),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey[500],
       appBar: AppBar(
@@ -206,6 +230,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ],
             ),
           ),
+
           Expanded(
             child: _favoriteBooks.isEmpty
                 ? const Center(child: Text("No favorite books yet."))
@@ -220,41 +245,62 @@ class _ProfilePageState extends State<ProfilePage> {
                   childAspectRatio: 0.65,
                 ),
                 itemBuilder: (context, index) {
-                  final book = _favoriteBooks[index]['volumeInfo'];
+                  final bookData = _favoriteBooks[index];
+                  final book = bookData['volumeInfo'];
                   final title = book['title'] ?? 'Unknown';
                   final thumbnail = book['imageLinks']?['thumbnail'];
+                  final bookId = bookData['id'];
 
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                  return Stack(
+                    alignment: Alignment.bottomCenter, // Stack alignment for bottom centered items
                     children: [
-                      Container(
-                        height: 130,
-                        width: 90,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          color: Colors.white,
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 4,
-                              offset: Offset(0, 2),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            height: 130,
+                            width: 90,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              color: Colors.white,
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black12,
+                                  blurRadius: 4,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: thumbnail != null
-                              ? Image.network(thumbnail, fit: BoxFit.cover)
-                              : const Center(child: Icon(Icons.book, size: 40)),
-                        ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: thumbnail != null
+                                  ? Image.network(thumbnail, fit: BoxFit.cover)
+                                  : const Center(child: Icon(Icons.book, size: 40)),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            title,
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        title,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 13),
+                      Positioned(
+                        right: 6,  // Adjust position from the right side
+                        bottom: 45, // Adjust position from the bottom
+                        child: IconButton(
+                          icon: const Icon(Icons.favorite, color: Colors.red),
+                          onPressed: () async {
+                            final userId = user.id;
+                            if (userId != null) {
+                              await _favoritesControl.removeFromFavorites(userId, bookId);
+                              await fetchFavoriteBooks(userId);
+                            }
+                          },
+                        ),
                       ),
                     ],
                   );
@@ -269,9 +315,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildButton(String label) {
     return ElevatedButton(
-      onPressed: () {
-        // Future functionality can go here
-      },
+      onPressed: () {},
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.black38,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

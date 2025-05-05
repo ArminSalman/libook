@@ -191,4 +191,35 @@ class DatabaseHelper {
     );
   }
 
+  // Kullanıcıya ait yorumları getirir
+  Future<List<Map<String, dynamic>>> getCommentsByUserId(int userId) async {
+    final db = await database;
+    return db.query(
+      'comments',
+      where: 'userId = ?',
+      whereArgs: [userId.toString()],  // userId'nin string olduğu varsayımı
+      orderBy: 'timestamp DESC',
+    );
+  }
+
+  // Belirli bir yorumu günceller (commentId ile)
+  Future<int> updateComment(int commentId, String newContent) async {
+    final db = await database;
+    return await db.update(
+      'comments',
+      {'content': newContent},
+      where: 'id = ?',
+      whereArgs: [commentId],
+    );
+  }
+
+  // Belirli bir yorumu siler (commentId ile)
+  Future<int> deleteComment(int commentId) async {
+    final db = await database;
+    return await db.delete(
+      'comments',
+      where: 'id = ?',
+      whereArgs: [commentId],
+    );
+  }
 }
