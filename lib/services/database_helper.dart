@@ -227,7 +227,20 @@ class DatabaseHelper {
     );
   }
 
-  // Bildirim ekle
+  Future<List<Map<String, dynamic>>> getAllComments() async{
+    final db = await database;
+    return db.query(
+      'comments',
+      orderBy: 'timestamp DESC',
+    );
+  }
+
+  Future<int> deleteCommentById(int id) async {
+    final db = await database;
+    return db.delete('comments', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // --------- Notification OPERATIONS ----------
   Future<int> addNotification(String bookId, String content) async {
     final db = await database;
     final now = DateTime.now();

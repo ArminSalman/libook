@@ -17,7 +17,6 @@ class BookDetailPage extends StatefulWidget {
 class _BookDetailPageState extends State<BookDetailPage> {
   final TextEditingController _commentController = TextEditingController();
   List<CommentControl> comments = [];
-  final String currentUserId = "demo_user"; // Güncel kullanıcı ID'siyle değiştirilebilir
 
   @override
   void initState() {
@@ -33,9 +32,12 @@ class _BookDetailPageState extends State<BookDetailPage> {
 
   Future<void> _loadComments() async {
     final bookKey = (widget.book['id'] ?? widget.book['title']).toString();
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    final userId = user?.id?.toString() ?? 'unknown';
+
     final maps = await DatabaseHelper.instance.getComments(
       bookKey,
-      currentUserId,
+      userId,
     );
     setState(() {
       comments = maps.map((m) => CommentControl.fromMap(m)).toList();
@@ -49,7 +51,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
     final user = Provider.of<UserProvider>(context, listen: false).user;
     final comment = CommentControl(
       bookId: (widget.book['id'] ?? widget.book['title']).toString(),
-      userId: currentUserId,
+      userId: user?.id?.toString() ?? 'unknown',
       username: user?.email ?? 'Anonymous',
       content: content,
       timestamp: DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
@@ -106,7 +108,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                 controller: _commentController,
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
-                  labelText: 'Yorum ekle',
+                  labelText: 'Add comment',
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.send),
                     onPressed: _addComment,

@@ -53,4 +53,12 @@ class CommentControl {
     return await _dbHelper.getCommentsByUser(userId);
   }
 
+  Future<List<Map<String, dynamic>>> getAllComments() async {
+    return await _dbHelper.getAllComments();
+  }
+
+  Future<void> deleteCommentById(int id) async {
+    await _dbHelper.deleteCommentById(id);
+  }
+
 }

@@ -77,16 +77,23 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> fetchUserComments(int userId) async {
     try {
-      print(userData?['id']);
       String sUserId = userId.toString();
       List<Map<String, dynamic>> comments = await _commentControl.getUserCommentsByUserId(sUserId);
       setState(() {
         _userComments = comments;
         _showingComments = true;
       });
-      print(comments);
     } catch (e) {
       print("Error fetching comments: $e");
+    }
+  }
+
+  Future<void> deleteComment(int commentId) async {
+    try {
+      await _commentControl.deleteCommentById(commentId);
+      await fetchUserComments(userData!['id']);
+    } catch (e) {
+      print("Failed to delete comment: $e");
     }
   }
 
@@ -111,9 +118,9 @@ class _ProfilePageState extends State<ProfilePage> {
             children: [
               _buildTextField("Username", usernameController, Icons.person),
               const SizedBox(height: 12),
-              _buildTextField("Name", nameController, Icons.account_circle),
+              _buildTextField("First Name", nameController, Icons.account_circle),
               const SizedBox(height: 12),
-              _buildTextField("Surname", surnameController, Icons.account_box),
+              _buildTextField("Last Name", surnameController, Icons.account_box),
               const SizedBox(height: 12),
               _buildTextField("Email", emailController, Icons.email),
             ],
@@ -164,6 +171,40 @@ class _ProfilePageState extends State<ProfilePage> {
         filled: true,
         fillColor: Colors.grey[600],
       ),
+    );
+  }
+
+  Widget _buildTabIndicator() {
+    return AnimatedAlign(
+      duration: const Duration(milliseconds: 300),
+      alignment: _showingComments ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        width: 80,
+        height: 1.5,
+        color: Colors.black54,
+      ),
+    );
+  }
+
+  Widget _buildButton(String label, [VoidCallback? onTap]) {
+    return ElevatedButton(
+      onPressed: onTap,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.black38,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+      child: Text(label, style: const TextStyle(color: Colors.white)),
+    );
+  }
+
+  Widget _divider() {
+    return Container(
+      height: 30,
+      width: 1.5,
+      color: Colors.black54,
+      margin: const EdgeInsets.symmetric(horizontal: 10),
     );
   }
 
@@ -226,18 +267,17 @@ class _ProfilePageState extends State<ProfilePage> {
                     }),
                     _divider(),
                     _buildButton("My Comments", () {
-                      if (userData?['email'] != null) {
-                        fetchUserComments(userData?['id']);
+                      if (userData?['id'] != null) {
+                        fetchUserComments(userData!['id']);
                       }
                     }),
                   ],
                 ),
                 Container(
-                  width: 80,
-                  height: 1.5,
-                  color: Colors.black54,
-                  margin: const EdgeInsets.only(top: 4, right: 125),
-                ),
+                  alignment: _showingComments ? Alignment.centerRight : Alignment.centerLeft,
+                  margin: const EdgeInsets.only(top: 4, left: 75, right: 95),
+                  child: _buildTabIndicator(),
+                )
               ],
             ),
           ),
@@ -247,37 +287,65 @@ class _ProfilePageState extends State<ProfilePage> {
               itemCount: _userComments.length,
               itemBuilder: (context, index) {
                 final comment = _userComments[index];
-                return ListTile(
-                  title: Text(comment['content']),
-                  subtitle: Text("Book ID: ${comment['bookId']} • ${comment['timestamp']}"),
+                return Card(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: ListTile(
+                    contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    title: Text(
+                      comment['content'],
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    subtitle: Text(
+                      "Book ID: ${comment['bookId']}\n${comment['timestamp']}",
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                    isThreeLine: true,
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.redAccent),
+                      onPressed: () {
+                        deleteComment(comment['id']);
+                      },
+                    ),
+                  ),
                 );
               },
             )
                 : _favoriteBooks.isEmpty
                 ? const Center(child: Text("No favorite books yet."))
                 : Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 16.0),
               child: GridView.builder(
                 itemCount: _favoriteBooks.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate:
+                const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
                   mainAxisSpacing: 16,
                   crossAxisSpacing: 12,
                   childAspectRatio: 0.65,
                 ),
                 itemBuilder: (context, index) {
-                  final book = _favoriteBooks[index]['volumeInfo'];
+                  final book =
+                  _favoriteBooks[index]['volumeInfo'];
                   final title = book['title'] ?? 'Unknown';
-                  final thumbnail = book['imageLinks']?['thumbnail'];
+                  final thumbnail =
+                  book['imageLinks']?['thumbnail'];
 
                   return Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                    crossAxisAlignment:
+                    CrossAxisAlignment.center,
                     children: [
                       Container(
                         height: 130,
                         width: 90,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius:
+                          BorderRadius.circular(12),
                           color: Colors.white,
                           boxShadow: const [
                             BoxShadow(
@@ -288,10 +356,14 @@ class _ProfilePageState extends State<ProfilePage> {
                           ],
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius:
+                          BorderRadius.circular(12),
                           child: thumbnail != null
-                              ? Image.network(thumbnail, fit: BoxFit.cover)
-                              : const Center(child: Icon(Icons.book, size: 40)),
+                              ? Image.network(thumbnail,
+                              fit: BoxFit.cover)
+                              : const Center(
+                              child: Icon(Icons.book,
+                                  size: 40)),
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -300,38 +372,17 @@ class _ProfilePageState extends State<ProfilePage> {
                         textAlign: TextAlign.center,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 13),
+                        style:
+                        const TextStyle(fontSize: 13),
                       ),
                     ],
                   );
                 },
               ),
             ),
-          ),
+          )
         ],
       ),
-    );
-  }
-
-  Widget _buildButton(String label, [VoidCallback? onTap]) {
-    return ElevatedButton(
-      onPressed: onTap,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.black38,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      ),
-      child: Text(label, style: const TextStyle(color: Colors.white)),
-    );
-  }
-
-  Widget _divider() {
-    return Container(
-      height: 30,
-      width: 1.5,
-      color: Colors.black54,
-      margin: const EdgeInsets.symmetric(horizontal: 10),
     );
   }
 }
