@@ -214,22 +214,22 @@ class DatabaseHelper {
       orderBy: 'timestamp DESC',
     );
   }
-  Future<List<Map<String, dynamic>>> getAllUserComments(String userId) async {
+  Future<List<Map<String, dynamic>>> getAllUserComments(String email) async {
     final db = await database;
     return await db.query(
       'comments',
-      where: 'userId = ?',
-      whereArgs: [userId],
+      where: 'email = ?',
+      whereArgs: [email],
       orderBy: 'timestamp DESC',
     );
   }
 
-  Future<List<Map<String, dynamic>>> getCommentsByUser(String email) async {
+  Future<List<Map<String, dynamic>>> getCommentsByUser(String userId) async {
     final db = await database;
     return db.query(
       'comments',
-      where: 'email = ?',
-      whereArgs: [email],
+      where: 'userId = ?',
+      whereArgs: [userId],
       orderBy: 'timestamp DESC',
     );
   }
