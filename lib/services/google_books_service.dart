@@ -1,33 +1,32 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+/// Basit Google Books istemcisi – *sadece* sorgu string’i alır.
 class GoogleBooksService {
+  // (Varsa kendi anahtarınızı ekleyin veya tamamen kaldırın.)
   final String apiKey = 'AIzaSyBJMvahNX8YQwjFfr_3sYf5fgXpQU6TejA';
 
+  /// `query` ⇒ Google Books raw JSON listesi (item’lar Map<String,dynamic>)
   Future<List<dynamic>> searchBooks(String query) async {
     final url = Uri.parse(
-        'https://www.googleapis.com/books/v1/volumes?q=$query&key=$apiKey');
+      'https://www.googleapis.com/books/v1/volumes?q=$query&key=$apiKey',
+    );
 
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
+    final res = await http.get(url);
+    if (res.statusCode == 200) {
+      final data = json.decode(res.body);
       return data['items'] ?? [];
     } else {
-      throw Exception('There was an error retrieving book data');
+      throw Exception('Google Books request failed: ${res.statusCode}');
     }
   }
 
-  Future<Map<String, dynamic>?> getBookById(String bookId) async {
-    final url = Uri.parse('https://www.googleapis.com/books/v1/volumes/$bookId');
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      print('Failed to fetch book by ID: ${response.statusCode}');
-      return null;
-    }
+  /// Tek kitap detayını getir (gerekiyorsa)
+  Future<Map<String, dynamic>?> getBookById(String id) async {
+    final url =
+    Uri.parse('https://www.googleapis.com/books/v1/volumes/$id?key=$apiKey');
+    final res = await http.get(url);
+    if (res.statusCode == 200) return json.decode(res.body);
+    return null;
   }
-
 }

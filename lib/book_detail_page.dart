@@ -1,13 +1,14 @@
 import 'main.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+
 import 'services/comment_control.dart';
 import 'services/database_helper.dart';
-import 'package:intl/intl.dart';
+import 'models/app_user.dart';                       // AppUser -> id & email
 
 class BookDetailPage extends StatefulWidget {
   final Map<String, dynamic> book;
-
   const BookDetailPage({super.key, required this.book});
 
   @override
@@ -15,43 +16,51 @@ class BookDetailPage extends StatefulWidget {
 }
 
 class _BookDetailPageState extends State<BookDetailPage> {
-  final TextEditingController _commentController = TextEditingController();
-  List<CommentControl> comments = [];
-  final String currentUserId = "demo_user"; // Güncel kullanıcı ID'siyle değiştirilebilir
+  final _commentController = TextEditingController();
+  List<CommentControl> _comments = [];
 
-  @override
-  void initState() {
-    super.initState();
-    _loadComments();
+  /* ─── JSON → sade Book map ─── */
+  Map<String, dynamic> _flatten(Map<String, dynamic> raw) {
+    if (raw.containsKey('volumeInfo')) {
+      final info = raw['volumeInfo'] ?? {};
+      return {
+        'id'         : raw['id'] ?? '',
+        'title'      : info['title'] ?? 'Untitled',
+        'thumbnail'  : (info['imageLinks']?['thumbnail']) ?? '',
+        'authors'    : (info['authors'] ?? ['Unknown']).join(', '),
+        'description': info['description'] ?? 'No description available.',
+      };
+    }
+    return raw;
   }
 
-  @override
-  void dispose() {
-    _commentController.dispose();
-    super.dispose();
-  }
-
+  /* ─── Yorumlar ─── */
   Future<void> _loadComments() async {
-    final bookKey = (widget.book['id'] ?? widget.book['title']).toString();
-    final maps = await DatabaseHelper.instance.getComments(
-      bookKey,
-      currentUserId,
-    );
-    setState(() {
-      comments = maps.map((m) => CommentControl.fromMap(m)).toList();
-    });
+    final AppUser? user =
+        Provider.of<UserProvider>(context, listen: false).user;
+    final String userId = user?.id.toString() ?? '';
+    final bookKey = _flatten(widget.book)['id'].toString();
+
+    final rows = await DatabaseHelper.instance.getComments(bookKey, userId);
+    setState(() =>
+    _comments = rows.map((m) => CommentControl.fromMap(m)).toList());
   }
 
   Future<void> _addComment() async {
-    final content = _commentController.text.trim();
-    if (content.isEmpty) return;
+    final txt = _commentController.text.trim();
+    if (txt.isEmpty) return;
 
-    final user = Provider.of<UserProvider>(context, listen: false).user;
+    final AppUser? user =
+        Provider.of<UserProvider>(context, listen: false).user;
+    if (user == null) return;                        // kullanıcı oturumu yoksa
+
+    final book = _flatten(widget.book);
+
     final comment = CommentControl(
-      bookId: (widget.book['id'] ?? widget.book['title']).toString(),
-      userId: currentUserId,
-      username: user?.email ?? 'Anonymous',
-      content: content,
+      bookId   : book['id'].toString(),
+      userId   : user.id.toString(),                 // ✔ veritabanına userId
+      username : user.email,                         // listede e‑posta göster
+      content  : txt,
       timestamp: DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
     );
     await comment.addComment();
@@ -60,61 +69,56 @@ class _BookDetailPageState extends State<BookDetailPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _loadComments();
+  }
+
+  /* ─── UI ─── */
+  @override
   Widget build(BuildContext context) {
-    final book = widget.book;
+    final book = _flatten(widget.book);
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(book['title'] ?? 'Kitap Detayı'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (book['thumbnail'] != null)
-                Center(
-                  child: Image.network(
-                    book['thumbnail'],
-                    height: 200,
-                  ),
-                ),
-              const SizedBox(height: 16),
-              Text(
-                book['title'] ?? 'Başlıksız',
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      appBar: AppBar(title: Text(book['title'])),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (book['thumbnail'].toString().isNotEmpty)
+              Center(child: Image.network(book['thumbnail'], height: 220)),
+            const SizedBox(height: 16),
+            Text(book['title'],
+                style: const TextStyle(
+                    fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            if (book['authors'].toString().isNotEmpty) Text(book['authors']),
+            const SizedBox(height: 12),
+            Text(book['description']),
+            const Divider(height: 32),
+            const Text('Comments',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            ..._comments.map(
+                  (c) => ListTile(
+                leading: const Icon(Icons.comment),
+                title: Text(c.content),
+                subtitle: Text('${c.username} • ${c.timestamp}'),
               ),
-              const SizedBox(height: 8),
-              Text(book['authors'] ?? 'Yazar bilgisi yok'),
-              const SizedBox(height: 8),
-              Text(book['description'] ?? 'Açıklama bulunamadı.'),
-              const Divider(height: 32),
-              const Text(
-                'Yorumlar',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              ...comments.map(
-                    (c) => ListTile(
-                  leading: const Icon(Icons.comment),
-                  title: Text(c.content),
-                  subtitle: Text('${c.username} • ${c.timestamp}'),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _commentController,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  labelText: 'Yorum ekle',
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.send),
-                    onPressed: _addComment,
-                  ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _commentController,
+              decoration: InputDecoration(
+                hintText: 'Add a comment',
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.send),
+                  onPressed: _addComment,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

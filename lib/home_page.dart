@@ -1,51 +1,74 @@
-
 import 'book_detail_page.dart';
 import 'package:flutter/material.dart';
-import 'package:libook/library_page.dart';
+import 'search_page.dart';                       // ✅ yeni Search
 import 'package:libook/profile_page.dart';
 import 'services/google_books_service.dart';
 import 'services/user_control.dart';
 import 'services/favorite_books_control.dart';
-import 'package:provider/provider.dart'; import 'main.dart';
+import 'package:provider/provider.dart';
+import 'main.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
-  _HomePageState createState() => _HomePageState(); }
+  _HomePageState createState() => _HomePageState();
+}
+
+/* -------------------------------------------------------------------------- */
+/*                     HOME PAGE –  bottom‑nav, app‑bar, vs.                  */
+/* -------------------------------------------------------------------------- */
 
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = [
-    const HomeScreen(),
-    const LibraryPage(), ProfilePage(),
+    const HomeScreen(),   // özgün ana akışın
+    const SearchPage(),   // 🔍 Library yerine Search
+    ProfilePage(),
   ];
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFD3D3D3),
-      appBar: AppBar( backgroundColor: Colors.grey[800],
-        title: const Text("LiBOOK",
-            style: TextStyle(color: Colors.white)),
-        actions: [ IconButton( icon: const Icon(Icons.search, color: Colors.white),
-          onPressed: () {}, ), IconButton( icon: const Icon(Icons.notifications, color: Colors.white),
-          onPressed: () {}, ), ], ), body: _pages[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar( backgroundColor: Colors.grey[800],
-        selectedItemColor: Colors.white, unselectedItemColor: Colors.grey[400],
-        currentIndex: _currentIndex, onTap: (index) {
-        setState(() { _currentIndex = index; });
-        },
-        items: const [ BottomNavigationBarItem(icon: Icon(Icons.home),
-            label: "Home"), BottomNavigationBarItem(icon: Icon(Icons.book),
-            label: "Library"), BottomNavigationBarItem(icon: Icon(Icons.person),
-            label: "Profile"),
-        ],
-      ),
-    );
-  }
-  }
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: const Color(0xFFD3D3D3),
+    appBar: AppBar(
+      backgroundColor: Colors.grey[800],
+      title: const Text('LiBOOK',
+          style: TextStyle(color: Colors.white)),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.search, color: Colors.white),
+          onPressed: () => setState(() => _currentIndex = 1),
+        ),
+        IconButton(
+          icon: const Icon(Icons.notifications, color: Colors.white),
+          onPressed: () {}, // bildirim sayfan varsa ekle
+        ),
+      ],
+    ),
+    body: _pages[_currentIndex],
+    bottomNavigationBar: BottomNavigationBar(
+      backgroundColor: Colors.grey[800],
+      selectedItemColor: Colors.white,
+      unselectedItemColor: Colors.grey[400],
+      currentIndex: _currentIndex,
+      onTap: (i) => setState(() => _currentIndex = i),
+      items: const [
+        BottomNavigationBarItem(
+            icon: Icon(Icons.home), label: 'Home'),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.search), label: 'Search'), // ✅
+        BottomNavigationBarItem(
+            icon: Icon(Icons.person), label: 'Profile'),
+      ],
+    ),
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*                        HOME SCREEN –  kitabı listele                       */
+/* -------------------------------------------------------------------------- */
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -55,74 +78,68 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final GoogleBooksService _booksService = GoogleBooksService();
+  final UserControl _userControl = UserControl();
   late FavoriteBooksControl _favoritesControl;
-  final List<Map<String, String>> _categories = [
-    {'title': 'Trending', 'query': 'bestsellers'},
-    {'title': 'Science', 'query': 'science'},
-    {'title': 'History', 'query': 'history'},
-    {'title': 'Fantasy', 'query': 'fantasy'},
-  ];
-  final Map<String, List<dynamic>> _booksByCategory = {};
-  Set<String> _favoritedBookIds = {};
-  int? _userId;
+
+  int? _userId;                             // giriş yapan kullanıcı
   bool _isLoading = true;
 
-  UserControl userControl = UserControl();
+  // kategori → API query
+  final List<Map<String, String>> _categories = [
+    {'title': 'Trending', 'query': 'bestsellers'},
+    {'title': 'Science',  'query': 'science'},
+    {'title': 'History',  'query': 'history'},
+    {'title': 'Fantasy',  'query': 'fantasy'},
+  ];
+
+  final Map<String, List<dynamic>> _booksByCategory = {};
+  Set<String> _favoritedBookIds = {};
 
   @override
   void initState() {
     super.initState();
-    _fetchAllCategories();
+    _favoritesControl =
+        Provider.of<FavoriteBooksControl>(context, listen: false);
+    _initPage();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _favoritesControl = Provider.of<FavoriteBooksControl>(context, listen: false);
-    getUserInfo();
+  Future<void> _initPage() async {
+    await _fetchCurrentUser();
+    await _loadAllCategories();
+    await _fetchFavorites();
+    setState(() => _isLoading = false);
   }
 
-  Future<void> getUserInfo() async {
-    final user = Provider.of<UserProvider>(context, listen: false).user;
-    if (user != null) {
-      final info = await userControl.getUserByEmail(user.email);
-      if (info != null) {
-        _userId = info['id'];
-        await _favoritesControl.loadFavorites(_userId!);
-        await _fetchFavorites();
-      }
+  Future<void> _fetchCurrentUser() async {
+    // Örnek: SharedPreferences’tan user‑id alınıyor olabilir.
+    // Buraya mevcut login mantığını ekleyebilirsin.
+    _userId = 1; // demo
+  }
+
+  /* ----------------------------  KATEGORİ ÇEKME  --------------------------- */
+
+  Future<void> _loadAllCategories() async {
+    for (var cat in _categories) {
+      final books = await _booksService.searchBooks(cat['query']!);
+      _booksByCategory[cat['title']!] = books;
     }
-    setState(() {
-      _isLoading = false;
-    });
   }
 
-  Future<void> _fetchAllCategories() async {
-    for (var category in _categories) {
-      final query = category['query']!;
-      try {
-        final books = await _booksService.searchBooks(query);
-        _booksByCategory[query] = books.take(10).toList();
-      } catch (e) {
-        debugPrint("Error fetching $query books: $e");
-        _booksByCategory[query] = [];
-      }
-    }
-    setState(() {});
-  }
+  /* ------------------------------  FAVORİLER  ------------------------------ */
 
   Future<void> _fetchFavorites() async {
     if (_userId == null) return;
-    final favorites = await _favoritesControl.getFavoriteBooks(_userId!);
+    await _favoritesControl.loadFavorites(_userId!);
     setState(() {
-      _favoritedBookIds = favorites.toSet();
+      _favoritedBookIds = _favoritesControl.favoriteBooks.toSet();
     });
   }
 
   Future<void> _toggleFavorite(String bookId) async {
     if (_userId == null) return;
 
-    final isFav = await _favoritesControl.isFavorite(_userId!, bookId);
+    final isFav =
+    _favoritesControl.isFavorite(_userId!, bookId);
 
     if (isFav) {
       await _favoritesControl.removeFromFavorites(_userId!, bookId);
@@ -133,108 +150,85 @@ class _HomeScreenState extends State<HomeScreen> {
     await _fetchFavorites();
   }
 
+  /* ------------------------------  UI BUILD  ------------------------------ */
+
   @override
   Widget build(BuildContext context) {
-    return _isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : ListView(
-      padding: const EdgeInsets.all(16.0),
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
       children: [
         const SizedBox(height: 8),
         const Text(
-          "Explore curated categories",
-          style: TextStyle(fontSize: 16, color: Colors.black54),
+          'Explore curated categories',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 24),
-        ..._categories.map((category) {
-          final title = category['title']!;
-          final query = category['query']!;
-          final books = _booksByCategory[query] ?? [];
+        const SizedBox(height: 16),
+        ..._categories.map((cat) {
+          final books = _booksByCategory[cat['title']] ?? [];
+          if (books.isEmpty) {
+            return const SizedBox.shrink();
+          }
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 12),
+              Text(cat['title']!,
+                  style: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
               SizedBox(
-                height: 180,
+                height: 220,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: books.length,
-                  itemBuilder: (context, index) {
-                    final book = books[index]['volumeInfo'];
-                    final image = book['imageLinks']?['thumbnail'];
-                    final bookID = books[index]['id'];
+                  itemBuilder: (_, i) {
+                    final book = books[i];
+                    final info   = book['volumeInfo'] ?? {};
+                    final thumb  = (info['imageLinks']?['thumbnail']) ?? '';
+                    final bookID = book['id'];
 
                     final isFavorite =
                     _favoritedBookIds.contains(bookID);
 
-                    return GestureDetector(
-                      onTap: () {
-                        final book = books[index]['volumeInfo'];
-                        final image = book['imageLinks']?['thumbnail'];
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => BookDetailPage(
-                              book: {
-                                'id': books[index]['id'],
-                                'title': book['title'] ?? 'Başlıksız',
-                                'authors':
-                                (book['authors'] as List?)?.join(', ') ??
-                                    'Yazar bilgisi yok',
-                                'description': book['description'] ??
-                                    'Açıklama bulunamadı.',
-                                'thumbnail': image,
-                              },
-                            ),
-                          ),
-                        );
-                      },
-                      child: Stack(
+                    return Container(
+                      width: 130,
+                      margin: const EdgeInsets.only(right: 12),
+                      child: Column(
                         children: [
-                          Container(
-                            width: 120,
-                            margin: const EdgeInsets.only(right: 12),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              color: Colors.white,
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Colors.black12,
-                                  blurRadius: 4,
-                                  offset: Offset(0, 2),
-                                )
-                              ],
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: image != null
-                                  ? Image.network(image,
-                                  fit: BoxFit.cover)
-                                  : const Center(
-                                child: Icon(Icons.book, size: 40),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      BookDetailPage(book: book),
+                                ),
                               ),
+                              child: thumb.isNotEmpty
+                                  ? Image.network(thumb, fit: BoxFit.cover)
+                                  : const Icon(Icons.book, size: 64),
                             ),
                           ),
-                          Positioned(
-                            bottom: 8,
-                            right: 8,
-                            child: IconButton(
-                              icon: Icon(
-                                isFavorite
-                                    ? Icons.favorite
-                                    : Icons.favorite_border,
-                                color: isFavorite
-                                    ? Colors.red
-                                    : Colors.grey,
-                              ),
-                              onPressed: () => _toggleFavorite(bookID),
+                          const SizedBox(height: 4),
+                          Text(
+                            info['title'] ?? 'No title',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              isFavorite
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color:
+                              isFavorite ? Colors.red : Colors.grey,
                             ),
+                            onPressed: () => _toggleFavorite(bookID),
                           ),
                         ],
                       ),
