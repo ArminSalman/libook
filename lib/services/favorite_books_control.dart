@@ -60,4 +60,6 @@ class FavoriteBooksControl extends ChangeNotifier {
   bool isFavorite(int userId, String bookID) {
     return _favoriteBooks.contains(bookID);
   }
+
+
 }

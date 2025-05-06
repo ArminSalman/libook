@@ -192,7 +192,7 @@ class DatabaseHelper {
   }
 
   // Kullanıcıya ait yorumları getirir
-  Future<List<Map<String, dynamic>>> getCommentsByUserId(int userId) async {
+  Future<List<Map<String, dynamic>>> getCommentsByUserId(String userId) async {
     final db = await database;
     return db.query(
       'comments',

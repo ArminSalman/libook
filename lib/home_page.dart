@@ -1,6 +1,7 @@
+import 'package:libook/notification_page.dart';
 import 'book_detail_page.dart';
 import 'package:flutter/material.dart';
-import 'search_page.dart';                       // ✅ yeni Search
+import 'search_page.dart';
 import 'package:libook/profile_page.dart';
 import 'services/google_books_service.dart';
 import 'services/user_control.dart';
@@ -15,17 +16,13 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-/* -------------------------------------------------------------------------- */
-/*                     HOME PAGE –  bottom‑nav, app‑bar, vs.                  */
-/* -------------------------------------------------------------------------- */
-
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = [
-    const HomeScreen(),   // özgün ana akışın
-    const SearchPage(),   // 🔍 Library yerine Search
-    ProfilePage(),
+    const HomeScreen(),
+    const SearchPage(),
+    const ProfilePage(),
   ];
 
   @override
@@ -33,8 +30,7 @@ class _HomePageState extends State<HomePage> {
     backgroundColor: const Color(0xFFD3D3D3),
     appBar: AppBar(
       backgroundColor: Colors.grey[800],
-      title: const Text('LiBOOK',
-          style: TextStyle(color: Colors.white)),
+      title: const Text('LiBOOK', style: TextStyle(color: Colors.white)),
       actions: [
         IconButton(
           icon: const Icon(Icons.search, color: Colors.white),
@@ -42,7 +38,14 @@ class _HomePageState extends State<HomePage> {
         ),
         IconButton(
           icon: const Icon(Icons.notifications, color: Colors.white),
-          onPressed: () {}, // bildirim sayfan varsa ekle
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const NotificationPage(),
+              ),
+            );
+          },
         ),
       ],
     ),
@@ -54,20 +57,13 @@ class _HomePageState extends State<HomePage> {
       currentIndex: _currentIndex,
       onTap: (i) => setState(() => _currentIndex = i),
       items: const [
-        BottomNavigationBarItem(
-            icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.search), label: 'Search'), // ✅
-        BottomNavigationBarItem(
-            icon: Icon(Icons.person), label: 'Profile'),
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+        BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
       ],
     ),
   );
 }
-
-/* -------------------------------------------------------------------------- */
-/*                        HOME SCREEN –  kitabı listele                       */
-/* -------------------------------------------------------------------------- */
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -81,15 +77,14 @@ class _HomeScreenState extends State<HomeScreen> {
   final UserControl _userControl = UserControl();
   late FavoriteBooksControl _favoritesControl;
 
-  int? _userId;                             // giriş yapan kullanıcı
+  int? _userId;
   bool _isLoading = true;
 
-  // kategori → API query
   final List<Map<String, String>> _categories = [
     {'title': 'Trending', 'query': 'bestsellers'},
-    {'title': 'Science',  'query': 'science'},
-    {'title': 'History',  'query': 'history'},
-    {'title': 'Fantasy',  'query': 'fantasy'},
+    {'title': 'Science', 'query': 'science'},
+    {'title': 'History', 'query': 'history'},
+    {'title': 'Fantasy', 'query': 'fantasy'},
   ];
 
   final Map<String, List<dynamic>> _booksByCategory = {};
@@ -98,8 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _favoritesControl =
-        Provider.of<FavoriteBooksControl>(context, listen: false);
+    _favoritesControl = Provider.of<FavoriteBooksControl>(context, listen: false);
     _initPage();
   }
 
@@ -111,12 +105,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _fetchCurrentUser() async {
-    // Örnek: SharedPreferences’tan user‑id alınıyor olabilir.
-    // Buraya mevcut login mantığını ekleyebilirsin.
-    _userId = 1; // demo
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    _userId = user?.id;
   }
-
-  /* ----------------------------  KATEGORİ ÇEKME  --------------------------- */
 
   Future<void> _loadAllCategories() async {
     for (var cat in _categories) {
@@ -124,8 +115,6 @@ class _HomeScreenState extends State<HomeScreen> {
       _booksByCategory[cat['title']!] = books;
     }
   }
-
-  /* ------------------------------  FAVORİLER  ------------------------------ */
 
   Future<void> _fetchFavorites() async {
     if (_userId == null) return;
@@ -137,20 +126,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _toggleFavorite(String bookId) async {
     if (_userId == null) return;
-
-    final isFav =
-    _favoritesControl.isFavorite(_userId!, bookId);
-
+    final isFav = _favoritesControl.isFavorite(_userId!, bookId);
     if (isFav) {
       await _favoritesControl.removeFromFavorites(_userId!, bookId);
     } else {
       await _favoritesControl.addToFavorites(_userId!, bookId);
     }
-
     await _fetchFavorites();
   }
-
-  /* ------------------------------  UI BUILD  ------------------------------ */
 
   @override
   Widget build(BuildContext context) {
@@ -169,16 +152,12 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(height: 16),
         ..._categories.map((cat) {
           final books = _booksByCategory[cat['title']] ?? [];
-          if (books.isEmpty) {
-            return const SizedBox.shrink();
-          }
+          if (books.isEmpty) return const SizedBox.shrink();
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(cat['title']!,
-                  style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(cat['title']!, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               SizedBox(
                 height: 220,
@@ -187,48 +166,57 @@ class _HomeScreenState extends State<HomeScreen> {
                   itemCount: books.length,
                   itemBuilder: (_, i) {
                     final book = books[i];
-                    final info   = book['volumeInfo'] ?? {};
-                    final thumb  = (info['imageLinks']?['thumbnail']) ?? '';
+                    final info = book['volumeInfo'] ?? {};
+                    final thumb = (info['imageLinks']?['thumbnail']) ?? '';
                     final bookID = book['id'];
-
-                    final isFavorite =
-                    _favoritedBookIds.contains(bookID);
+                    final isFavorite = _favoritedBookIds.contains(bookID);
 
                     return Container(
                       width: 130,
                       margin: const EdgeInsets.only(right: 12),
-                      child: Column(
+                      child: Stack(
                         children: [
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      BookDetailPage(book: book),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => BookDetailPage(book: book),
+                                    ),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: thumb.isNotEmpty
+                                        ? Image.network(thumb, fit: BoxFit.cover, width: 130, height: 180)
+                                        : const Icon(Icons.book, size: 64),
+                                  ),
                                 ),
                               ),
-                              child: thumb.isNotEmpty
-                                  ? Image.network(thumb, fit: BoxFit.cover)
-                                  : const Icon(Icons.book, size: 64),
-                            ),
+                              const SizedBox(height: 4),
+                              Text(
+                                info['title'] ?? 'No title',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            info['title'] ?? 'No title',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              isFavorite
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                              color:
-                              isFavorite ? Colors.red : Colors.grey,
+                          Positioned(
+                            right: 4,
+                            bottom: 36,
+                            child: IconButton(
+                              icon: Icon(
+                                isFavorite ? Icons.favorite : Icons.favorite_border,
+                                color: isFavorite ? Colors.red : Colors.grey,
+                                size: 20,
+                              ),
+                              onPressed: () => _toggleFavorite(bookID),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
                             ),
-                            onPressed: () => _toggleFavorite(bookID),
                           ),
                         ],
                       ),

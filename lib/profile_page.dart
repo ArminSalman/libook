@@ -4,6 +4,8 @@ import 'main.dart';
 import 'services/user_control.dart';
 import 'services/favorite_books_control.dart';
 import 'services/google_books_service.dart';
+import 'services/comment_control.dart';
+import 'book_detail_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -14,24 +16,28 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   bool isLoading = true;
-  final UserControl userControl = UserControl();
-  final FavoriteBooksControl _favoritesControl = FavoriteBooksControl();
-  final GoogleBooksService _booksService = GoogleBooksService();
+  bool _showingComments = false;
+
+  late FavoriteBooksControl _favoritesControl;
+  UserControl userControl = UserControl();
+  GoogleBooksService _booksService = GoogleBooksService();
+  CommentControl _commentControl = CommentControl(
+    bookId: '',
+    userId: '',
+    username: '',
+    content: '',
+    timestamp: '',
+  );
 
   Map<String, dynamic>? userData;
   List<Map<String, dynamic>> _favoriteBooks = [];
+  List<Map<String, dynamic>> _userComments = [];
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final user = Provider.of<UserProvider>(context, listen: false).user;
-      if (user == null) {
-        Navigator.of(context).pushReplacementNamed('/login');
-      } else {
-        getUserInfo();
-      }
-    });
+    _favoritesControl = Provider.of<FavoriteBooksControl>(context, listen: false);
+    getUserInfo();
   }
 
   Future<void> getUserInfo() async {
@@ -52,21 +58,43 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> fetchFavoriteBooks(int userId) async {
     try {
-      final bookIds = await _favoritesControl.getFavoriteBooks(userId);
+      await _favoritesControl.loadFavorites(userId);
+      final bookIds = _favoritesControl.favoriteBooks;
       List<Map<String, dynamic>> books = [];
-
       for (String id in bookIds) {
         final book = await _booksService.getBookById(id);
         if (book != null) {
           books.add(book);
         }
       }
-
       setState(() {
         _favoriteBooks = books;
+        _showingComments = false;
       });
     } catch (e) {
       print("Error fetching favorite books: $e");
+    }
+  }
+
+  Future<void> fetchUserComments(int userId) async {
+    try {
+      String sUserId = userId.toString();
+      List<Map<String, dynamic>> comments = await _commentControl.getCommentsByUserId(sUserId);
+      setState(() {
+        _userComments = comments;
+        _showingComments = true;
+      });
+    } catch (e) {
+      print("Error fetching comments: $e");
+    }
+  }
+
+  Future<void> deleteComment(int commentId) async {
+    try {
+      await _commentControl.deleteCommentById(commentId);
+      await fetchUserComments(userData!['id']);
+    } catch (e) {
+      print("Failed to delete comment: $e");
     }
   }
 
@@ -86,22 +114,17 @@ class _ProfilePageState extends State<ProfilePage> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87)),
         ),
         content: SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.6,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildTextField("Username", usernameController, Icons.person),
-                const SizedBox(height: 12),
-                _buildTextField("Name", nameController, Icons.account_circle),
-                const SizedBox(height: 12),
-                _buildTextField("Surname", surnameController, Icons.account_box),
-                const SizedBox(height: 12),
-                _buildTextField("Email", emailController, Icons.email),
-              ],
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildTextField("Username", usernameController, Icons.person),
+              const SizedBox(height: 12),
+              _buildTextField("Name", nameController, Icons.account_circle),
+              const SizedBox(height: 12),
+              _buildTextField("Surname", surnameController, Icons.account_box),
+              const SizedBox(height: 12),
+              _buildTextField("Email", emailController, Icons.email),
+            ],
           ),
         ),
         actions: [
@@ -111,18 +134,15 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           ElevatedButton(
             onPressed: () async {
-              if (userData == null) return;
-
               final updatedUser = {
                 'id': userData!['id'],
                 'username': usernameController.text,
                 'first_name': nameController.text,
                 'last_name': surnameController.text,
                 'email': emailController.text,
-                'password': userData!['password'],
+                'password': userData?['password'],
               };
-
-              await userControl.updateUser(userData!['id'], updatedUser);
+              await userControl.updateUser(userData?['id'], updatedUser);
               Navigator.pop(context);
               await getUserInfo();
             },
@@ -146,37 +166,46 @@ class _ProfilePageState extends State<ProfilePage> {
         labelText: label,
         labelStyle: const TextStyle(color: Colors.black),
         prefixIcon: Icon(icon, color: Colors.grey[800]),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
         filled: true,
         fillColor: Colors.grey[600],
       ),
     );
   }
 
+  Widget _buildButton(String label, bool isSelected, VoidCallback onTap) {
+    return Column(
+      children: [
+        ElevatedButton(
+          onPressed: onTap,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.black38,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          ),
+          child: Text(label, style: const TextStyle(color: Colors.white)),
+        ),
+        if (isSelected)
+          Container(
+            width: 80,
+            height: 1.5,
+            color: Colors.black54,
+            margin: const EdgeInsets.only(top: 4),
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<UserProvider>(context).user;
-
-    if (user == null) {
-      return Scaffold(
-        backgroundColor: Colors.grey[500],
-        body: const Center(
-          child: Text("Lütfen giriş yapınız.", style: TextStyle(fontSize: 16, color: Colors.black54)),
-        ),
-      );
-    }
-
     return Scaffold(
       backgroundColor: Colors.grey[500],
       appBar: AppBar(
         backgroundColor: Colors.grey[500],
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings, color: Colors.black45),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -211,28 +240,58 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           Padding(
             padding: const EdgeInsets.all(12.0),
-            child: Column(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildButton("Favorites"),
-                    _divider(),
-                    _buildButton("My Comments"),
-                  ],
-                ),
-                Container(
-                  width: 80,
-                  height: 1.5,
-                  color: Colors.black54,
-                  margin: const EdgeInsets.only(top: 4, right: 125),
-                ),
+                _buildButton("Favorites", !_showingComments, () {
+                  if (userData?['id'] != null) {
+                    fetchFavoriteBooks(userData!['id']);
+                  }
+                }),
+                const SizedBox(width: 20),
+                _buildButton("My Comments", _showingComments, () {
+                  if (userData?['id'] != null) {
+                    fetchUserComments(userData!['id']);
+                  }
+                }),
               ],
             ),
           ),
-
           Expanded(
-            child: _favoriteBooks.isEmpty
+            child: _showingComments
+                ? ListView.builder(
+              itemCount: _userComments.length,
+              itemBuilder: (context, index) {
+                final comment = _userComments[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: ListTile(
+                    contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    title: Text(
+                      comment['content'],
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    subtitle: Text(
+                      "Book ID: ${comment['bookId']}\n${comment['timestamp']}",
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                    isThreeLine: true,
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.redAccent),
+                      onPressed: () {
+                        deleteComment(comment['id']);
+                      },
+                    ),
+                  ),
+                );
+              },
+            )
+                : _favoriteBooks.isEmpty
                 ? const Center(child: Text("No favorite books yet."))
                 : Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -245,14 +304,12 @@ class _ProfilePageState extends State<ProfilePage> {
                   childAspectRatio: 0.65,
                 ),
                 itemBuilder: (context, index) {
-                  final bookData = _favoriteBooks[index];
-                  final book = bookData['volumeInfo'];
+                  final book = _favoriteBooks[index]['volumeInfo'];
+                  final bookID = _favoriteBooks[index]['id'];
                   final title = book['title'] ?? 'Unknown';
                   final thumbnail = book['imageLinks']?['thumbnail'];
-                  final bookId = bookData['id'];
 
                   return Stack(
-                    alignment: Alignment.bottomCenter, // Stack alignment for bottom centered items
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
@@ -289,17 +346,19 @@ class _ProfilePageState extends State<ProfilePage> {
                         ],
                       ),
                       Positioned(
-                        right: 6,  // Adjust position from the right side
-                        bottom: 45, // Adjust position from the bottom
+                        right: 4,
+                        bottom: 36,
                         child: IconButton(
-                          icon: const Icon(Icons.favorite, color: Colors.red),
+                          icon: const Icon(Icons.favorite, color: Colors.red, size: 20),
                           onPressed: () async {
-                            final userId = user.id;
+                            final userId = userData?['id'];
                             if (userId != null) {
-                              await _favoritesControl.removeFromFavorites(userId, bookId);
+                              await _favoritesControl.removeFromFavorites(userId, bookID);
                               await fetchFavoriteBooks(userId);
                             }
                           },
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
                         ),
                       ),
                     ],
@@ -310,28 +369,6 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildButton(String label) {
-    return ElevatedButton(
-      onPressed: () {},
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.black38,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      ),
-      child: Text(label, style: const TextStyle(color: Colors.white)),
-    );
-  }
-
-  Widget _divider() {
-    return Container(
-      height: 30,
-      width: 1.5,
-      color: Colors.black54,
-      margin: const EdgeInsets.symmetric(horizontal: 10),
     );
   }
 }
