@@ -5,7 +5,6 @@ import 'services/user_control.dart';
 import 'services/favorite_books_control.dart';
 import 'services/google_books_service.dart';
 import 'services/comment_control.dart';
-import 'book_detail_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -20,7 +19,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   late FavoriteBooksControl _favoritesControl;
   UserControl userControl = UserControl();
-  GoogleBooksService _booksService = GoogleBooksService();
+  final GoogleBooksService _booksService = GoogleBooksService();
   CommentControl _commentControl = CommentControl(
     bookId: '',
     userId: '',
