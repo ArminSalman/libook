@@ -55,6 +55,6 @@ class CommentControl {
   }
 
   Future<void> deleteCommentById(int commentId) async{
-    await _dbHelper.addComment(this);
+    await _dbHelper.deleteComment(commentId);
   }
 }
