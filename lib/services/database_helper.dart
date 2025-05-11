@@ -61,6 +61,29 @@ class DatabaseHelper {
         )
       ''');
     }
+
+    if(oldVersion < 4) {
+      // v3 migration: comments
+      await db.execute('''
+      CREATE TABLE avatar (
+        userId INTEGER PRIMARY KEY,
+        avatarLink TEXT
+      )
+    ''');
+    }
+
+    if (oldVersion < 5) {
+      // v5 migration: notifications
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS notifications (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          bookId TEXT NOT NULL UNIQUE,
+          content TEXT NOT NULL,
+          date TEXT NOT NULL,
+          time TEXT NOT NULL
+        )
+      ''');
+    }
   }
 
   /// Fresh install: build all tables
@@ -93,6 +116,23 @@ class DatabaseHelper {
         username TEXT,
         content TEXT,
         timestamp TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE avatar (
+        userId INTEGER PRIMARY KEY,
+        avatarLink TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE notifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        bookId TEXT NOT NULL UNIQUE,
+        content TEXT NOT NULL,
+        date TEXT NOT NULL,
+        time TEXT NOT NULL
       )
     ''');
   }
@@ -191,7 +231,7 @@ class DatabaseHelper {
     );
   }
 
-  // Kullanıcıya ait yorumları getirir
+  // Bring comments belong to user
   Future<List<Map<String, dynamic>>> getCommentsByUserId(String userId) async {
     final db = await database;
     return db.query(
@@ -213,7 +253,7 @@ class DatabaseHelper {
     );
   }
 
-  // Belirli bir yorumu siler (commentId ile)
+  // Delete specific comment (commentId ile)
   Future<int> deleteComment(int commentId) async {
     final db = await database;
     return await db.delete(
@@ -222,4 +262,43 @@ class DatabaseHelper {
       whereArgs: [commentId],
     );
   }
+
+  // ---------- Notification OPERATIONS ----------
+
+  /// Inserts a new notification record.
+  /// `conflictAlgorithm: ignore` ensures a given bookId is only saved once.
+  Future<int> addNotification(String bookId, String content) async {
+    final db = await database;
+    final now = DateTime.now();
+    final date = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+    final time = "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
+    return db.insert(
+      'notifications',
+      {
+        'bookId': bookId,
+        'content': content,
+        'date': date,
+        'time': time,
+      },
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
+  }
+
+  /// Returns true if this `bookId` has already been saved.
+  Future<bool> isBookAlreadyNotified(String bookId) async {
+    final db = await database;
+    final res = await db.query(
+      'notifications',
+      where: 'bookId = ?',
+      whereArgs: [bookId],
+    );
+    return res.isNotEmpty;
+  }
+
+  /// Fetches all notifications, newest first.
+  Future<List<Map<String, dynamic>>> getAllNotifications() async {
+    final db = await database;
+    return db.query('notifications', orderBy: 'date DESC, time DESC');
+  }
+
 }

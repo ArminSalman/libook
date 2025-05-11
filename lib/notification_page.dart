@@ -20,27 +20,27 @@ class _NotificationPageState extends State<NotificationPage> {
   }
 
   Future<void> _loadNotifications() async {
-    setState(() => _isLoading = true);  // yüklemeye başla
-    final data = await _notificationControl.getAllNotifications();  // veritabanından oku :contentReference[oaicite:0]{index=0}:contentReference[oaicite:1]{index=1}
+    setState(() => _isLoading = true);
+    final data = await _notificationControl.getNotificationHistory();
     setState(() {
       _notifications = data;
-      _isLoading = false;              // yükleme bitti
+      _isLoading = false;
     });
   }
 
   Future<void> _suggestBook() async {
-    setState(() => _isLoading = true);  // öneri sırasında da spinner göster
+    setState(() => _isLoading = true);
     try {
-      await _notificationControl.suggestDailyBook();  // öneri ve bildirim ekleme :contentReference[oaicite:2]{index=2}:contentReference[oaicite:3]{index=3}
+      await _notificationControl.suggestDailyBook();
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Yeni kitap önerisi eklendi!'))
+          const SnackBar(content: Text('New book suggestion added!'))
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Öneri sırasında hata: $e'))
+          SnackBar(content: Text('Error during suggestion: $e'))
       );
     } finally {
-      await _loadNotifications();       // her durumda listeyi yenile
+      await _loadNotifications();
     }
   }
 

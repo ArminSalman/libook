@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:libook/services/user_control.dart';
 import 'login_page.dart';
+import 'services/database_helper.dart';
+import 'package:sqflite/sqflite.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -38,16 +40,29 @@ class _SignUpPageState extends State<SignUpPage> {
   void _signUp() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      print(0);
 
       await _userControl.addUser(
         username: _usernameController.text,
         firstName: _firstNameController.text,
         lastName: _lastNameController.text,
         email: _emailController.text,
-        password: _passwordController.text
+        password: _passwordController.text,
       );
-      print(1);
+
+      // 👇 Avatar'ı kaydet
+      final db = await DatabaseHelper.instance.database;
+      final user = await _userControl.getUserByEmail(_emailController.text);
+      if (user != null) {
+        await db.insert(
+          'avatar',
+          {
+            'userId': user['id'],
+            'avatarLink': 'https://api.dicebear.com/9.x/avataaars/svg?seed=Chase',
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Sign-up successful!')),
@@ -57,6 +72,7 @@ class _SignUpPageState extends State<SignUpPage> {
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
